@@ -11,7 +11,9 @@
         public string UserAddress { get; set; } = string.Empty;
         public string UserContactNo {  get; set; } = string.Empty;
         public string UserType { get; set; } = "Admin"; // "Admin", "Worker", "Child or Parent"
-        public int UserCDWCenterId { get; set; }
+        public int? CenterId { get; set; }
+        public Center? Center { get; set; }
         public bool UserIsActive { get; set; } = true;
+        public DateTime UserEnrolledAt { get; set; } = DateTime.UtcNow;
     }
 }

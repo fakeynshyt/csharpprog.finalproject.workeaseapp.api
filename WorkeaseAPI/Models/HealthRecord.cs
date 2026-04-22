@@ -3,7 +3,7 @@
     public class HealthRecord
     {
         public int HealthRecordId { get; set; }
-        public int HealthRecordChildId { get; set; }
+        public int ChildId { get; set; }
         public Child? Child { get; set; }
         public DateTime HealthRecordDate { get; set; }
         public decimal HealthRecordWeigtKg { get; set; }
@@ -13,6 +13,7 @@
         public string HealthRecordNotes { get; set; } = string.Empty;
         public int HealthRecordedByUserId { get; set; }
         public bool HealthRecordIsSync { get; set; } = false;
+        public DateTime HealthRecordCreatedAt { get; set; } = DateTime.UtcNow;
 
         private decimal CalculateBMI()
         {

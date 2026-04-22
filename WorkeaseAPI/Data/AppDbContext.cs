@@ -1,0 +1,63 @@
+﻿using Microsoft.EntityFrameworkCore;
+using WorkeaseAPI.Models;
+
+namespace WorkeaseAPI.Data
+{
+    public class AppDbContext : DbContext
+    {
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+        {
+        }
+        public DbSet<User> Users => Set <User>();
+        public DbSet<Child> Children => Set<Child>();
+        public DbSet<Center> Centers => Set<Center>();
+        public DbSet<HealthRecord> HealthRecords => Set<HealthRecord>();
+        public DbSet<FeeRecord> FeeRecords => Set<FeeRecord>();
+        public DbSet<SyncLog> SyncLogs => Set<SyncLog>();
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<User>()
+    .           HasOne(u => u.Center)
+                .WithMany()
+                .HasForeignKey(u => u.CenterId)
+                .IsRequired(false)            
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Child>()
+                .HasOne(c => c.Center)
+                .WithMany()
+                .HasForeignKey(c => c.CenterId)
+                .OnDelete(DeleteBehavior.Restrict);
+ 
+            modelBuilder.Entity<Child>()
+                .HasOne(c => c.Guardian)
+                .WithOne()
+                .HasForeignKey<Child>(c => c.UserId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+ 
+            modelBuilder.Entity<HealthRecord>()
+                .HasOne(h => h.Child)
+                .WithMany()
+                .HasForeignKey(h => h.ChildId)
+                .OnDelete(DeleteBehavior.Cascade);
+ 
+            modelBuilder.Entity<HealthRecord>()
+                .Ignore(h => h.HealthRecordBmi);
+ 
+            modelBuilder.Entity<FeeRecord>()
+                .HasOne(f => f.Child)
+                .WithMany()
+                .HasForeignKey(f => f.ChildId)
+                .OnDelete(DeleteBehavior.Cascade);
+ 
+            modelBuilder.Entity<HealthRecord>()
+                .Property(h => h.HealthRecordWeigtKg).HasPrecision(5, 2);
+            modelBuilder.Entity<HealthRecord>()
+                .Property(h => h.HealthRecordHeightCm).HasPrecision(5, 2);
+            modelBuilder.Entity<FeeRecord>()
+                .Property(f => f.FeeRecordAmount).HasPrecision(10, 2);
+        }
+    }
+}
