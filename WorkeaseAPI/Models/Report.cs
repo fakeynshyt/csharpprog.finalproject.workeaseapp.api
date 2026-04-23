@@ -9,7 +9,7 @@
         public Center? Center { get; set; }
         public int Month { get; set; }
         public int Year { get; set; }
-        public string Format { get; set; } = "PDF";
+        public string Format { get; set; } = "PDF"; // "PDF" or "Word"
         public string Observations { get; set; } = string.Empty;
         public byte[]? FileData { get; set; }
         public DateTime GeneratedAt { get; set; } = DateTime.UtcNow;
