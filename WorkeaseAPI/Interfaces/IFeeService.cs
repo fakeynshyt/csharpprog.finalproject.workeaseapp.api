@@ -7,7 +7,7 @@ namespace WorkeaseAPI.Interfaces
     {
         Task<IEnumerable<FeeRecord>> GetFilteredFeeRecordsAsync(int? centerId, int? month, int? year);
         Task<IEnumerable<FeeSummaryDto>> GetFeeRecordsByGuardianId(int guardianId);
-        Task<FeeRecord?> GetFeeRecordById(int id);
+        Task<FeeRecord?> GetFeeRecordById(int feeId);
         Task<FeeRecord> CreateFeeRecord(FeeRecord feeRecord);
         Task<bool> UpdateFeeRecordAsync(int feeId, FeeRecord feeRecord);
         Task<bool> DeleteFeeRecordAsync(int feeId);

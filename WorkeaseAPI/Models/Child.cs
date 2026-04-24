@@ -14,7 +14,8 @@
         public string ChildGuardianContactNo { get; set; } = string.Empty;
         public int CenterId { get; set; }
         public Center? Center { get; set; }
-        public DateTime CHildEnrolledDate { get; set; } = DateTime.UtcNow;
-        public DateTime CHildUpdatedDate { get; set; } = DateTime.UtcNow;
+        public DateTime ChildEnrolledDate { get; set; } = DateTime.UtcNow;
+        public DateTime ChildUpdatedDate { get; set; } = DateTime.UtcNow;
+        public bool ChildIsActive { get; set; } = true;
     }
 }

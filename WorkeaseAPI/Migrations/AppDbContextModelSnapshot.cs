@@ -51,12 +51,6 @@ namespace WorkeaseAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ChildId"));
 
-                    b.Property<DateTime>("CHildEnrolledDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("CHildUpdatedDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<int>("CenterId")
                         .HasColumnType("int");
 
@@ -66,6 +60,9 @@ namespace WorkeaseAPI.Migrations
                     b.Property<string>("ChildEmail")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("ChildEnrolledDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("ChildFirstName")
                         .IsRequired()
@@ -83,9 +80,15 @@ namespace WorkeaseAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("ChildIsActive")
+                        .HasColumnType("bit");
+
                     b.Property<string>("ChildLastName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("ChildUpdatedDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<int?>("UserId")
                         .HasColumnType("int");

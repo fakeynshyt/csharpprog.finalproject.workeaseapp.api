@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WorkeaseAPI.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialMigrations : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -86,8 +86,9 @@ namespace WorkeaseAPI.Migrations
                     UserId = table.Column<int>(type: "int", nullable: true),
                     ChildGuardianContactNo = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CenterId = table.Column<int>(type: "int", nullable: false),
-                    CHildEnrolledDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CHildUpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    ChildEnrolledDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ChildUpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ChildIsActive = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
