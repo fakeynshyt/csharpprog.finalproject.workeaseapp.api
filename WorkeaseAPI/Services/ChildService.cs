@@ -57,7 +57,7 @@ namespace WorkeaseAPI.Services
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<ChildReadDto>> GetAllChildReadAsync() =>
+        public async Task<IEnumerable<ChildReadDto>> GetAllChildrenAsync() =>
             await _db.Children
                 .Include(c => c.Center)
                 .Where(c => c.ChildIsActive)
@@ -85,7 +85,7 @@ namespace WorkeaseAPI.Services
         {
             var child = await _db.Children
                 .Include(c => c.Center)
-                .FirstOrDefaultAsync(c => c.UserId == guardianUserId && c.ChildIsActive);
+                .FirstOrDefaultAsync(c => c.GuardianId == guardianUserId && c.ChildIsActive);
 
             if (child is null) return null;
 
@@ -137,7 +137,7 @@ namespace WorkeaseAPI.Services
             if (child is null || guardian is null || guardian.UserType != "Parent")
                 return false;
 
-            child.UserId = guardianUserId;
+            child.GuardianId = guardianUserId;
             child.ChildUpdatedDate = DateTime.Now;
 
             await _db.SaveChangesAsync();

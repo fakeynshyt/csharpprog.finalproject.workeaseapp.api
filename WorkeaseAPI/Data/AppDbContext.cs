@@ -36,7 +36,7 @@ namespace WorkeaseAPI.Data
             modelBuilder.Entity<Child>()
                 .HasOne(c => c.Guardian)
                 .WithOne()
-                .HasForeignKey<Child>(c => c.UserId)
+                .HasForeignKey<Child>(c => c.GuardianId)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.SetNull);
 

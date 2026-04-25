@@ -5,7 +5,7 @@ namespace WorkeaseAPI.Interfaces
 {
     public interface IChildService
     {
-        Task<IEnumerable<ChildReadDto>> GetAllChildReadAsync();
+        Task<IEnumerable<ChildReadDto>> GetAllChildrenAsync();
         Task<IEnumerable<ChildReadDto>> GetAllChildByCdwUserAsync(int cdwUserId);
         Task<Child?> GetChildByIdAsync(int childId);
         Task<GuardianChildDto> GetGuardianChildByIdAsync(int guardianUserId);

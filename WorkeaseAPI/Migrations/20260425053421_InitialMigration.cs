@@ -79,12 +79,9 @@ namespace WorkeaseAPI.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     ChildFirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     ChildLastName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ChildEmail = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ChildHashPassword = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     ChildBirthDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ChildGender = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    UserId = table.Column<int>(type: "int", nullable: true),
-                    ChildGuardianContactNo = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    GuardianId = table.Column<int>(type: "int", nullable: true),
                     CenterId = table.Column<int>(type: "int", nullable: false),
                     ChildEnrolledDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ChildUpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -100,8 +97,8 @@ namespace WorkeaseAPI.Migrations
                         principalColumn: "CenterId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Children_Users_UserId",
-                        column: x => x.UserId,
+                        name: "FK_Children_Users_GuardianId",
+                        column: x => x.GuardianId,
                         principalTable: "Users",
                         principalColumn: "UserId",
                         onDelete: ReferentialAction.SetNull);
@@ -151,7 +148,7 @@ namespace WorkeaseAPI.Migrations
                     FeeRecordAmount = table.Column<decimal>(type: "decimal(10,2)", precision: 10, scale: 2, nullable: false),
                     FeeRecordDueDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     FeeRecordIsPaid = table.Column<bool>(type: "bit", nullable: false),
-                    FeeRecordPaidDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    FeeRecordPaidDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     FeeRecordedByUserId = table.Column<int>(type: "int", nullable: false),
                     FeeRecordIsSync = table.Column<bool>(type: "bit", nullable: false)
                 },
@@ -199,11 +196,11 @@ namespace WorkeaseAPI.Migrations
                 column: "CenterId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Children_UserId",
+                name: "IX_Children_GuardianId",
                 table: "Children",
-                column: "UserId",
+                column: "GuardianId",
                 unique: true,
-                filter: "[UserId] IS NOT NULL");
+                filter: "[GuardianId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_FeeRecords_ChildId",

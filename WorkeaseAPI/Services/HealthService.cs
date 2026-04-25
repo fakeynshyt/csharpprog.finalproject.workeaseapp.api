@@ -23,33 +23,41 @@ namespace WorkeaseAPI.Services
             return healthRecord;
         }
 
-        public Task<bool> DeleteHealthRecordAsync(int healthId)
+        public async Task<bool> DeleteHealthRecordAsync(int healthId)
         {
-            throw new NotImplementedException();
+            var record = await GetHealthRecordByIdAsync(healthId);
+            if (record is null) return false;
+
+            _db?.HealthRecords.Remove(record);
+            await _db.SaveChangesAsync();
+
+            return true;
         }
 
         public async Task<IEnumerable<HealthRecord>> GetFilteredHealthRecordsAsync(int? childId, int? centerId)
         {
+            
             var query = _db.HealthRecords
-                .Include(h => h.ChildId == childId.Value)
-                .AsQueryable();
+                           .Include(h => h.Child)   
+                               .ThenInclude(c => c!.Center)
+                           .AsQueryable();
 
+            
             if (childId.HasValue)
                 query = query.Where(h => h.ChildId == childId.Value);
 
-            if (childId.HasValue)
+            if (centerId.HasValue)
                 query = query.Where(h => h.Child!.CenterId == centerId.Value);
 
             return await query
-                .OrderByDescending(h => h.HealthRecordDate)
-                .ToListAsync();
-
+                         .OrderByDescending(h => h.HealthRecordDate)
+                         .ToListAsync();
         }
 
         public async Task<IEnumerable<HealthSummaryDto>> GetHealthRecordByGuardianIdAsync(int guardianId)
         {
             var child = await _db.Children
-                .FirstOrDefaultAsync(c => c.UserId == guardianId && c.ChildIsActive);
+                .FirstOrDefaultAsync(c => c.GuardianId == guardianId && c.ChildIsActive);
 
             if(child is null) return Enumerable.Empty<HealthSummaryDto>();
 
@@ -73,9 +81,22 @@ namespace WorkeaseAPI.Services
                 .Include(h => h.Child)
                 .FirstOrDefaultAsync(h => h.HealthRecordId == healthId);
 
-        public Task<bool> UpdateHealthRecordAsync(int healthId, HealthRecord healthRecord)
+        public async Task<bool> UpdateHealthRecordAsync(int healthId, HealthRecord healthRecord)
         {
-            throw new NotImplementedException();
+            var record = await GetHealthRecordByIdAsync(healthId);
+            if(record is null) return false;
+
+            record.HealthRecordDate = healthRecord.HealthRecordDate;
+            record.HealthRecordWeigtKg = healthRecord.HealthRecordWeigtKg;
+            record.HealthRecordHeightCm = healthRecord.HealthRecordHeightCm;
+            record.HealthRecordIsPresent = healthRecord.HealthRecordIsPresent;
+            record.HealthRecordNotes = healthRecord.HealthRecordNotes;
+
+            _db.HealthRecords.Add(record);
+
+            await _db.SaveChangesAsync();
+
+            return true;
         }
     }
 }

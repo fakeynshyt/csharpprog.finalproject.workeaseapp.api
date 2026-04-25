@@ -10,7 +10,7 @@
         public decimal FeeRecordAmount { get; set; }
         public DateTime FeeRecordDueDate { get; set; }
         public bool FeeRecordIsPaid { get; set; } = false;
-        public DateTime FeeRecordPaidDate { get; set; }
+        public DateTime? FeeRecordPaidDate { get; set; }
         public int FeeRecordedByUserId { get; set; }
         public bool FeeRecordIsSync { get; set; } = false;
     }

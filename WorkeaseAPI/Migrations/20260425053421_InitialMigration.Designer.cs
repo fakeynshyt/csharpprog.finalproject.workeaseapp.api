@@ -12,7 +12,7 @@ using WorkeaseAPI.Data;
 namespace WorkeaseAPI.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260424115225_InitialMigration")]
+    [Migration("20260425053421_InitialMigration")]
     partial class InitialMigration
     {
         /// <inheritdoc />
@@ -60,10 +60,6 @@ namespace WorkeaseAPI.Migrations
                     b.Property<DateTime>("ChildBirthDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("ChildEmail")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime>("ChildEnrolledDate")
                         .HasColumnType("datetime2");
 
@@ -72,14 +68,6 @@ namespace WorkeaseAPI.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ChildGender")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ChildGuardianContactNo")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ChildHashPassword")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -93,16 +81,16 @@ namespace WorkeaseAPI.Migrations
                     b.Property<DateTime>("ChildUpdatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("UserId")
+                    b.Property<int?>("GuardianId")
                         .HasColumnType("int");
 
                     b.HasKey("ChildId");
 
                     b.HasIndex("CenterId");
 
-                    b.HasIndex("UserId")
+                    b.HasIndex("GuardianId")
                         .IsUnique()
-                        .HasFilter("[UserId] IS NOT NULL");
+                        .HasFilter("[GuardianId] IS NOT NULL");
 
                     b.ToTable("Children");
                 });
@@ -134,7 +122,7 @@ namespace WorkeaseAPI.Migrations
                     b.Property<int>("FeeRecordMonth")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("FeeRecordPaidDate")
+                    b.Property<DateTime?>("FeeRecordPaidDate")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("FeeRecordYear")
@@ -331,7 +319,7 @@ namespace WorkeaseAPI.Migrations
 
                     b.HasOne("WorkeaseAPI.Models.User", "Guardian")
                         .WithOne()
-                        .HasForeignKey("WorkeaseAPI.Models.Child", "UserId")
+                        .HasForeignKey("WorkeaseAPI.Models.Child", "GuardianId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Center");
