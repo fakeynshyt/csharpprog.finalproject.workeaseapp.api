@@ -10,20 +10,29 @@ namespace WorkeaseAPI.Controllers
     [ApiController]
     public class AuthenticationController : ControllerBase
     {
+        // Step 1 — declare the service
         private readonly IAuthenticationService _authService;
 
-        public AuthenticationController(IAuthenticationService authService) =>
-            _authService = authService;
+        // Step 2 — inject through constructor
+        public AuthenticationController(IAuthenticationService authService)
+            => _authService = authService;
 
+        // Step 3 — use it in endpoints
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginRequestDto request)
         {
-            var response = await _authService.LoginAsync(request);
-
-            if(response is null) return Unauthorized(new { message = "Invalid email or password" });
-
-            return Ok(response);
+            try
+            {
+                var response = await _authService.LoginAsync(request);
+                if (response is null)
+                    return Unauthorized(new { message = "Invalid email or password." });
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
         }
-
     }
 }

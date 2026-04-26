@@ -2,72 +2,188 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using WorkeaseAPI.Data;
+using WorkeaseAPI.DTOs;
 using WorkeaseAPI.Interfaces;
 using WorkeaseAPI.Models;
+using WorkeaseAPI.Services;
 
 namespace WorkeaseAPI.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
+    [Authorize]
     public class FeesController : ControllerBase
     {
         private readonly IFeeService _feeService;
+        private readonly IAutoFeeService _autoFeeService;
+        private readonly AppDbContext _db;
 
-        public FeesController(IFeeService feeService)
-            => _feeService = feeService;
+        public FeesController(IFeeService feeService,
+                              IAutoFeeService autoFeeService,
+                              AppDbContext db)
+        {
+            _feeService = feeService;
+            _autoFeeService = autoFeeService;
+            _db = db;
+        }
 
-        // GET api/fees?centerId=1&month=5&year=2025
-        // Admin: all records. CDW: filter by their center.
         [HttpGet]
         [Authorize(Policy = "AdminAndCDW")]
         public async Task<IActionResult> GetAll([FromQuery] int? centerId,
                                                 [FromQuery] int? month,
-                                                [FromQuery] int? year) =>
-            Ok(await _feeService.GetFilteredFeeRecordsAsync(centerId, month, year));
+                                                [FromQuery] int? year)
+        {
+            try
+            {
+                var role = GetUserType();
+                var userId = GetUserId();
 
-        // GET api/fees/myChild
-        // Parent only — their child's fee records
+                if (role == "CDW" && !centerId.HasValue)
+                {
+                    var cdwUser = await _db.Users.FindAsync(userId);
+                    centerId = cdwUser?.CenterId;
+                }
+
+                var fees = await _feeService.GetFilteredFeeRecordAsync(centerId, month, year);
+                return Ok(fees);
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
+        }
+
         [HttpGet("myChild")]
         [Authorize(Policy = "ParentOnly")]
         public async Task<IActionResult> GetMyChildFees()
         {
-            var parentUserId = GetUserId();
-            var fees = await _feeService.GetFeeRecordsByGuardianId(parentUserId);
-            return Ok(fees);
+            try
+            {
+                var fees = await _feeService.GetFeeRecordByGuardianUserIdAsync(GetUserId());
+                return Ok(fees);
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
         }
 
-        // POST api/fees
-        // Admin only — create a fee record for a child
+        [HttpGet("{id}")]
+        [Authorize(Policy = "AdminAndCDW")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            try
+            {
+                var fee = await _feeService.GetFeeRecordByIdAsync(id);
+                return fee is null ? NotFound() : Ok(fee);
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
+        }
+
         [HttpPost]
         [Authorize(Policy = "AdminOnly")]
-        public async Task<IActionResult> Create(FeeRecord record)
+        public async Task<IActionResult> Create(CreateFeeDto dto)  // ✅ DTO
         {
-            record.FeeRecordedByUserId = GetUserId();
-            var created = await _feeService.CreateFeeRecord(record);
-            return Ok(created);
+            try
+            {
+                var created = await _feeService.CreateFeeRecordAsync(dto, GetUserId());
+                return Ok(created);
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
         }
 
-        // PUT api/fees/{id}/pay
-        // CDW / Admin — mark a fee as paid
         [HttpPut("{id}/pay")]
         [Authorize(Policy = "AdminAndCDW")]
-        public async Task<IActionResult> MarkPaid(int id) =>
-            await _feeService.MarkFeeRecordPaidAsync(id) ? NoContent() : NotFound();
+        public async Task<IActionResult> MarkPaid(int id)
+        {
+            try
+            {
+                var result = await _feeService.MarkFeeRecordAsPaidAsync(id);
+                return result ? NoContent() : NotFound();
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
+        }
 
-        // PUT api/fees/{id}
-        // Admin only — edit fee amount or month/year
         [HttpPut("{id}")]
         [Authorize(Policy = "AdminOnly")]
-        public async Task<IActionResult> Update(int id, FeeRecord record) =>
-            await _feeService.UpdateFeeRecordAsync(id, record) ? NoContent() : NotFound();
+        public async Task<IActionResult> Update(int id, UpdateFeeDto dto)  // ✅ DTO
+        {
+            try
+            {
+                var result = await _feeService.UpdateFeeRecordAsync(id, dto);
+                return result ? NoContent() : NotFound();
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
+        }
 
-        // DELETE api/fees/{id}
-        // Admin only — delete a fee record
         [HttpDelete("{id}")]
         [Authorize(Policy = "AdminOnly")]
-        public async Task<IActionResult> Delete(int id) =>
-            await _feeService.DeleteFeeRecordAsync(id) ? NoContent() : NotFound();
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                var result = await _feeService.DeleteFeeRecordAsync(id);
+                return result ? NoContent() : NotFound();
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
+        }
+
+        [HttpPost("generate-monthly")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> GenerateMonthly()
+        {
+            try
+            {
+                await _autoFeeService.GenerateMonthlyFeesAsync();
+                return Ok(new { message = "Monthly fees generated successfully." });
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
+        }
+
+        [HttpPost("process-overdue")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> ProcessOverdue()
+        {
+            try
+            {
+                await _autoFeeService.ProcessOverdueFeesAsync();
+                return Ok(new { message = "Overdue fees processed successfully." });
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
+        }
 
         private int GetUserId() => int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        private string GetUserType() => User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
     }
 }

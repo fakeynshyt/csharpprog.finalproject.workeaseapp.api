@@ -51,10 +51,6 @@ namespace WorkeaseAPI.Migrations
                     UserName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     UserEmail = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     UserHashPassword = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    UserBirthDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UserGender = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    UserAddress = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    UserContactNo = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     UserType = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CenterId = table.Column<int>(type: "int", nullable: true),
                     UserIsActive = table.Column<bool>(type: "bit", nullable: false),
@@ -112,12 +108,12 @@ namespace WorkeaseAPI.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<int>(type: "int", nullable: false),
                     CenterId = table.Column<int>(type: "int", nullable: false),
-                    Month = table.Column<int>(type: "int", nullable: false),
-                    Year = table.Column<int>(type: "int", nullable: false),
-                    Format = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ReportMonth = table.Column<int>(type: "int", nullable: false),
+                    ReportYear = table.Column<int>(type: "int", nullable: false),
+                    ReportFormat = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Observations = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    FileData = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
-                    GeneratedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    ReportFileData = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
+                    ReportGeneratedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -145,12 +141,14 @@ namespace WorkeaseAPI.Migrations
                     ChildId = table.Column<int>(type: "int", nullable: false),
                     FeeRecordMonth = table.Column<int>(type: "int", nullable: false),
                     FeeRecordYear = table.Column<int>(type: "int", nullable: false),
-                    FeeRecordAmount = table.Column<decimal>(type: "decimal(10,2)", precision: 10, scale: 2, nullable: false),
-                    FeeRecordDueDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    FeeRecordMonthlyAmount = table.Column<decimal>(type: "decimal(10,2)", precision: 10, scale: 2, nullable: false),
+                    FeeRecordCarryOver = table.Column<decimal>(type: "decimal(10,2)", precision: 10, scale: 2, nullable: false),
+                    FeeRecordTotalAmount = table.Column<decimal>(type: "decimal(10,2)", precision: 10, scale: 2, nullable: false),
                     FeeRecordIsPaid = table.Column<bool>(type: "bit", nullable: false),
                     FeeRecordPaidDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    FeeRecordedByUserId = table.Column<int>(type: "int", nullable: false),
-                    FeeRecordIsSync = table.Column<bool>(type: "bit", nullable: false)
+                    FeeRecordDueDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    FeeRecordIsOverdue = table.Column<bool>(type: "bit", nullable: false),
+                    FeeRecordedByUserId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -171,8 +169,8 @@ namespace WorkeaseAPI.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     ChildId = table.Column<int>(type: "int", nullable: false),
                     HealthRecordDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    HealthRecordWeigtKg = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: false),
-                    HealthRecordHeightCm = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: false),
+                    HealthRecordWeigtKg = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    HealthRecordHeightCm = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     HealthRecordIsPresent = table.Column<bool>(type: "bit", nullable: false),
                     HealthRecordNotes = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     HealthRecordedByUserId = table.Column<int>(type: "int", nullable: false),

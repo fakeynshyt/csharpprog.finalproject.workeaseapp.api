@@ -5,12 +5,12 @@ namespace WorkeaseAPI.Interfaces
 {
     public interface IFeeService
     {
-        Task<IEnumerable<FeeRecord>> GetFilteredFeeRecordsAsync(int? centerId, int? month, int? year);
-        Task<IEnumerable<FeeSummaryDto>> GetFeeRecordsByGuardianId(int guardianId);
-        Task<FeeRecord?> GetFeeRecordById(int feeId);
-        Task<FeeRecord> CreateFeeRecord(FeeRecord feeRecord);
-        Task<bool> MarkFeeRecordPaidAsync(int feeId);
-        Task<bool> UpdateFeeRecordAsync(int feeId, FeeRecord feeRecord);
-        Task<bool> DeleteFeeRecordAsync(int feeId);
+        Task<IEnumerable<FeeRecord>> GetFilteredFeeRecordAsync(int? centerId, int? month, int? year);
+        Task<IEnumerable<FeeSummaryDto>> GetFeeRecordByGuardianUserIdAsync(int parentUserId);
+        Task<FeeRecord?> GetFeeRecordByIdAsync(int id);
+        Task<FeeRecord> CreateFeeRecordAsync(CreateFeeDto dto, int recordedByUserId);
+        Task<bool> MarkFeeRecordAsPaidAsync(int id);
+        Task<bool> UpdateFeeRecordAsync(int id, UpdateFeeDto dto);
+        Task<bool> DeleteFeeRecordAsync(int id);
     }
 }

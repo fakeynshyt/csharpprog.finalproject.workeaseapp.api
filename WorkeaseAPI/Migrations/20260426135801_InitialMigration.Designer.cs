@@ -12,7 +12,7 @@ using WorkeaseAPI.Data;
 namespace WorkeaseAPI.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260425053421_InitialMigration")]
+    [Migration("20260426135801_InitialMigration")]
     partial class InitialMigration
     {
         /// <inheritdoc />
@@ -106,24 +106,32 @@ namespace WorkeaseAPI.Migrations
                     b.Property<int>("ChildId")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("FeeRecordAmount")
+                    b.Property<decimal>("FeeRecordCarryOver")
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
                     b.Property<DateTime>("FeeRecordDueDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<bool>("FeeRecordIsPaid")
+                    b.Property<bool>("FeeRecordIsOverdue")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("FeeRecordIsSync")
+                    b.Property<bool>("FeeRecordIsPaid")
                         .HasColumnType("bit");
 
                     b.Property<int>("FeeRecordMonth")
                         .HasColumnType("int");
 
+                    b.Property<decimal>("FeeRecordMonthlyAmount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
                     b.Property<DateTime?>("FeeRecordPaidDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<decimal>("FeeRecordTotalAmount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
 
                     b.Property<int>("FeeRecordYear")
                         .HasColumnType("int");
@@ -156,8 +164,7 @@ namespace WorkeaseAPI.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<decimal>("HealthRecordHeightCm")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<bool>("HealthRecordIsPresent")
                         .HasColumnType("bit");
@@ -170,8 +177,7 @@ namespace WorkeaseAPI.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("HealthRecordWeigtKg")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("HealthRecordedByUserId")
                         .HasColumnType("int");
@@ -194,27 +200,27 @@ namespace WorkeaseAPI.Migrations
                     b.Property<int>("CenterId")
                         .HasColumnType("int");
 
-                    b.Property<byte[]>("FileData")
-                        .HasColumnType("varbinary(max)");
-
-                    b.Property<string>("Format")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("GeneratedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("Month")
-                        .HasColumnType("int");
-
                     b.Property<string>("Observations")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("UserId")
+                    b.Property<byte[]>("ReportFileData")
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("ReportFormat")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("ReportGeneratedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ReportMonth")
                         .HasColumnType("int");
 
-                    b.Property<int>("Year")
+                    b.Property<int>("ReportYear")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
                         .HasColumnType("int");
 
                     b.HasKey("ReportId");
@@ -265,27 +271,12 @@ namespace WorkeaseAPI.Migrations
                     b.Property<int?>("CenterId")
                         .HasColumnType("int");
 
-                    b.Property<string>("UserAddress")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("UserBirthDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UserContactNo")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("UserEmail")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("UserEnrolledAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("UserGender")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserHashPassword")
                         .IsRequired()

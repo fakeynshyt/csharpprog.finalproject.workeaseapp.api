@@ -2,12 +2,15 @@
 using System.Security.Cryptography;
 using System.Text;
 using WorkeaseAPI.Data;
+using WorkeaseAPI.Helpers;
 using WorkeaseAPI.Models;
 
 namespace WorkEaseAPI.Data
 {
     public static class DataSeeder
     {
+        private const decimal MONTHLY_CONTRIBUTION = 100.00m;
+
         public static async Task SeedAsync(AppDbContext db)
         {
             await SeedCentersAsync(db);
@@ -22,7 +25,6 @@ namespace WorkEaseAPI.Data
         {
             if (await db.Centers.AnyAsync()) return;
 
-            // ✅ No Id — let SQL Server generate it
             db.Centers.AddRange(
                 new Center { CenterName = "CDW Poblacion", CenterLocation = "Poblacion, Burgos, Pangasinan" },
                 new Center { CenterName = "CDW Cabayugan", CenterLocation = "San Pascual, Burgos, Pangasinan" }
@@ -37,13 +39,11 @@ namespace WorkEaseAPI.Data
         {
             if (await db.Users.AnyAsync()) return;
 
-            // ✅ Fetch real generated IDs from step 1
             var center1 = await db.Centers.FirstAsync(c => c.CenterName == "CDW Poblacion");
             var center2 = await db.Centers.FirstAsync(c => c.CenterName == "CDW Cabayugan");
 
             db.Users.AddRange(
 
-                // Admin — no center
                 new User
                 {
                     UserName = "Renier Rafols",
@@ -54,15 +54,13 @@ namespace WorkEaseAPI.Data
                     UserIsActive = true,
                     UserEnrolledAt = DateTime.UtcNow
                 },
-
-                // CDW Workers
                 new User
                 {
                     UserName = "Maria Santos",
                     UserEmail = "maria@workease.com",
-                    UserHashPassword = HashPassword("Cdw@123"),
+                    UserHashPassword = HashPassword("Cdw@12345"),
                     UserType = "CDW",
-                    CenterId = center1.CenterId,  // ✅ real generated ID
+                    CenterId = center1.CenterId,
                     UserIsActive = true,
                     UserEnrolledAt = DateTime.UtcNow
                 },
@@ -70,19 +68,17 @@ namespace WorkEaseAPI.Data
                 {
                     UserName = "Jose Reyes",
                     UserEmail = "jose@workease.com",
-                    UserHashPassword = HashPassword("Cdw@123"),
+                    UserHashPassword = HashPassword("Cdw@12345"),
                     UserType = "CDW",
-                    CenterId = center2.CenterId,  // ✅ real generated ID
+                    CenterId = center2.CenterId,
                     UserIsActive = true,
                     UserEnrolledAt = DateTime.UtcNow
                 },
-
-                // Parents — no center
                 new User
                 {
                     UserName = "Ana Dela Cruz",
                     UserEmail = "ana@gmail.com",
-                    UserHashPassword = HashPassword("Parent@123"),
+                    UserHashPassword = HashPassword("Parent@12345"),
                     UserType = "Parent",
                     CenterId = null,
                     UserIsActive = true,
@@ -92,7 +88,7 @@ namespace WorkEaseAPI.Data
                 {
                     UserName = "Pedro Bautista",
                     UserEmail = "pedro@gmail.com",
-                    UserHashPassword = HashPassword("Parent@123"),
+                    UserHashPassword = HashPassword("Parent@12345"),
                     UserType = "Parent",
                     CenterId = null,
                     UserIsActive = true,
@@ -102,7 +98,7 @@ namespace WorkEaseAPI.Data
                 {
                     UserName = "Rosa Mendoza",
                     UserEmail = "rosa@gmail.com",
-                    UserHashPassword = HashPassword("Parent@123"),
+                    UserHashPassword = HashPassword("Parent@12345"),
                     UserType = "Parent",
                     CenterId = null,
                     UserIsActive = true,
@@ -119,14 +115,12 @@ namespace WorkEaseAPI.Data
         {
             if (await db.Children.AnyAsync()) return;
 
-            // ✅ Fetch real generated IDs from previous steps
             var center1 = await db.Centers.FirstAsync(c => c.CenterName == "CDW Poblacion");
             var center2 = await db.Centers.FirstAsync(c => c.CenterName == "CDW Cabayugan");
             var ana = await db.Users.FirstAsync(u => u.UserEmail == "ana@gmail.com");
             var pedro = await db.Users.FirstAsync(u => u.UserEmail == "pedro@gmail.com");
             var rosa = await db.Users.FirstAsync(u => u.UserEmail == "rosa@gmail.com");
 
-            // ✅ No ChildId — SQL Server generates it
             db.Children.AddRange(
 
                 new Child
@@ -138,7 +132,7 @@ namespace WorkEaseAPI.Data
                     CenterId = center1.CenterId,
                     GuardianId = ana.UserId,
                     ChildIsActive = true,
-                    ChildEnrolledDate = DateTime.UtcNow,
+                    ChildEnrolledDate = new DateTime(2025, 1, 1), // enrolled January 2025
                     ChildUpdatedDate = DateTime.UtcNow
                 },
                 new Child
@@ -150,7 +144,7 @@ namespace WorkEaseAPI.Data
                     CenterId = center1.CenterId,
                     GuardianId = pedro.UserId,
                     ChildIsActive = true,
-                    ChildEnrolledDate = DateTime.UtcNow,
+                    ChildEnrolledDate = new DateTime(2025, 1, 1),
                     ChildUpdatedDate = DateTime.UtcNow
                 },
                 new Child
@@ -162,7 +156,7 @@ namespace WorkEaseAPI.Data
                     CenterId = center1.CenterId,
                     GuardianId = rosa.UserId,
                     ChildIsActive = true,
-                    ChildEnrolledDate = DateTime.UtcNow,
+                    ChildEnrolledDate = new DateTime(2025, 1, 1),
                     ChildUpdatedDate = DateTime.UtcNow
                 },
                 new Child
@@ -172,9 +166,9 @@ namespace WorkEaseAPI.Data
                     ChildBirthDate = new DateTime(2021, 1, 30),
                     ChildGender = "Female",
                     CenterId = center2.CenterId,
-                    GuardianId = null,             // no parent linked yet
+                    GuardianId = null,
                     ChildIsActive = true,
-                    ChildEnrolledDate = DateTime.UtcNow,
+                    ChildEnrolledDate = new DateTime(2025, 1, 1),
                     ChildUpdatedDate = DateTime.UtcNow
                 },
                 new Child
@@ -186,7 +180,7 @@ namespace WorkEaseAPI.Data
                     CenterId = center2.CenterId,
                     GuardianId = null,
                     ChildIsActive = true,
-                    ChildEnrolledDate = DateTime.UtcNow,
+                    ChildEnrolledDate = new DateTime(2025, 1, 1),
                     ChildUpdatedDate = DateTime.UtcNow
                 }
             );
@@ -200,7 +194,6 @@ namespace WorkEaseAPI.Data
         {
             if (await db.HealthRecords.AnyAsync()) return;
 
-            // ✅ Fetch real generated IDs
             var liam = await db.Children.FirstAsync(c => c.ChildFirstName == "Liam");
             var sofia = await db.Children.FirstAsync(c => c.ChildFirstName == "Sofia");
             var marco = await db.Children.FirstAsync(c => c.ChildFirstName == "Marco");
@@ -315,7 +308,6 @@ namespace WorkEaseAPI.Data
         {
             if (await db.FeeRecords.AnyAsync()) return;
 
-            // ✅ Fetch real generated IDs
             var liam = await db.Children.FirstAsync(c => c.ChildFirstName == "Liam");
             var sofia = await db.Children.FirstAsync(c => c.ChildFirstName == "Sofia");
             var marco = await db.Children.FirstAsync(c => c.ChildFirstName == "Marco");
@@ -326,23 +318,315 @@ namespace WorkEaseAPI.Data
 
             db.FeeRecords.AddRange(
 
-                // Liam — paid both months
-                new FeeRecord { ChildId = liam.ChildId, FeeRecordMonth = 3, FeeRecordYear = 2025, FeeRecordAmount = 50.00m, FeeRecordIsPaid = true, FeeRecordPaidDate = new DateTime(2025, 3, 12), FeeRecordedByUserId = maria.UserId },
-                new FeeRecord { ChildId = liam.ChildId, FeeRecordMonth = 4, FeeRecordYear = 2025, FeeRecordAmount = 50.00m, FeeRecordIsPaid = true, FeeRecordPaidDate = new DateTime(2025, 4, 10), FeeRecordedByUserId = maria.UserId },
+                // ── LIAM ─────────────────────────────────────────
+                // Jan — paid (no carryover, first month)
+                new FeeRecord
+                {
+                    ChildId = liam.ChildId,
+                    FeeRecordMonth = 1,
+                    FeeRecordYear = 2025,
+                    FeeRecordMonthlyAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordCarryOver = 0.00m,
+                    FeeRecordTotalAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordIsPaid = true,
+                    FeeRecordPaidDate = new DateTime(2025, 1, 15),
+                    FeeRecordDueDate = DateHelper.GetEndOfMonth(1, 2025),
+                    FeeRecordIsOverdue = false,
+                    FeeRecordedByUserId = maria.UserId
+                },
+                // Feb — paid (no carryover)
+                new FeeRecord
+                {
+                    ChildId = liam.ChildId,
+                    FeeRecordMonth = 2,
+                    FeeRecordYear = 2025,
+                    FeeRecordMonthlyAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordCarryOver = 0.00m,
+                    FeeRecordTotalAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordIsPaid = true,
+                    FeeRecordPaidDate = new DateTime(2025, 2, 10),
+                    FeeRecordDueDate = DateHelper.GetEndOfMonth(2, 2025),
+                    FeeRecordIsOverdue = false,
+                    FeeRecordedByUserId = maria.UserId
+                },
+                // Mar — paid (no carryover)
+                new FeeRecord
+                {
+                    ChildId = liam.ChildId,
+                    FeeRecordMonth = 3,
+                    FeeRecordYear = 2025,
+                    FeeRecordMonthlyAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordCarryOver = 0.00m,
+                    FeeRecordTotalAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordIsPaid = true,
+                    FeeRecordPaidDate = new DateTime(2025, 3, 12),
+                    FeeRecordDueDate = DateHelper.GetEndOfMonth(3, 2025),
+                    FeeRecordIsOverdue = false,
+                    FeeRecordedByUserId = maria.UserId
+                },
+                // Apr — paid (no carryover)
+                new FeeRecord
+                {
+                    ChildId = liam.ChildId,
+                    FeeRecordMonth = 4,
+                    FeeRecordYear = 2025,
+                    FeeRecordMonthlyAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordCarryOver = 0.00m,
+                    FeeRecordTotalAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordIsPaid = true,
+                    FeeRecordPaidDate = new DateTime(2025, 4, 10),
+                    FeeRecordDueDate = DateHelper.GetEndOfMonth(4, 2025),
+                    FeeRecordIsOverdue = false,
+                    FeeRecordedByUserId = maria.UserId
+                },
 
-                // Sofia — paid March, unpaid April
-                new FeeRecord { ChildId = sofia.ChildId, FeeRecordMonth = 3, FeeRecordYear = 2025, FeeRecordAmount = 50.00m, FeeRecordIsPaid = true, FeeRecordPaidDate = new DateTime(2025, 3, 15), FeeRecordedByUserId = maria.UserId },
-                new FeeRecord { ChildId = sofia.ChildId, FeeRecordMonth = 4, FeeRecordYear = 2025, FeeRecordAmount = 50.00m, FeeRecordIsPaid = false, FeeRecordPaidDate = null, FeeRecordedByUserId = maria.UserId },
+                // ── SOFIA ────────────────────────────────────────
+                // Jan — paid
+                new FeeRecord
+                {
+                    ChildId = sofia.ChildId,
+                    FeeRecordMonth = 1,
+                    FeeRecordYear = 2025,
+                    FeeRecordMonthlyAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordCarryOver = 0.00m,
+                    FeeRecordTotalAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordIsPaid = true,
+                    FeeRecordPaidDate = new DateTime(2025, 1, 20),
+                    FeeRecordDueDate = DateHelper.GetEndOfMonth(1, 2025),
+                    FeeRecordIsOverdue = false,
+                    FeeRecordedByUserId = maria.UserId
+                },
+                // Feb — unpaid → overdue
+                new FeeRecord
+                {
+                    ChildId = sofia.ChildId,
+                    FeeRecordMonth = 2,
+                    FeeRecordYear = 2025,
+                    FeeRecordMonthlyAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordCarryOver = 0.00m,
+                    FeeRecordTotalAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordIsPaid = false,
+                    FeeRecordPaidDate = null,
+                    FeeRecordDueDate = DateHelper.GetEndOfMonth(2, 2025),
+                    FeeRecordIsOverdue = true,  // past due
+                    FeeRecordedByUserId = maria.UserId
+                },
+                // Mar — unpaid + 100 carryover from Feb → overdue
+                new FeeRecord
+                {
+                    ChildId = sofia.ChildId,
+                    FeeRecordMonth = 3,
+                    FeeRecordYear = 2025,
+                    FeeRecordMonthlyAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordCarryOver = 100.00m,  // Feb unpaid
+                    FeeRecordTotalAmount = 200.00m,  // 100 + 100
+                    FeeRecordIsPaid = true,
+                    FeeRecordPaidDate = new DateTime(2025, 3, 15),
+                    FeeRecordDueDate = DateHelper.GetEndOfMonth(3, 2025),
+                    FeeRecordIsOverdue = false,
+                    FeeRecordedByUserId = maria.UserId
+                },
+                // Apr — paid (no carryover since Mar was paid)
+                new FeeRecord
+                {
+                    ChildId = sofia.ChildId,
+                    FeeRecordMonth = 4,
+                    FeeRecordYear = 2025,
+                    FeeRecordMonthlyAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordCarryOver = 0.00m,
+                    FeeRecordTotalAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordIsPaid = false,
+                    FeeRecordPaidDate = null,
+                    FeeRecordDueDate = DateHelper.GetEndOfMonth(4, 2025),
+                    FeeRecordIsOverdue = true,  // past due
+                    FeeRecordedByUserId = maria.UserId
+                },
 
-                // Marco — unpaid both months
-                new FeeRecord { ChildId = marco.ChildId, FeeRecordMonth = 3, FeeRecordYear = 2025, FeeRecordAmount = 50.00m, FeeRecordIsPaid = false, FeeRecordPaidDate = null, FeeRecordedByUserId = maria.UserId },
-                new FeeRecord { ChildId = marco.ChildId, FeeRecordMonth = 4, FeeRecordYear = 2025, FeeRecordAmount = 50.00m, FeeRecordIsPaid = false, FeeRecordPaidDate = null, FeeRecordedByUserId = maria.UserId },
+                // ── MARCO ────────────────────────────────────────
+                // Jan — unpaid → overdue
+                new FeeRecord
+                {
+                    ChildId = marco.ChildId,
+                    FeeRecordMonth = 1,
+                    FeeRecordYear = 2025,
+                    FeeRecordMonthlyAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordCarryOver = 0.00m,
+                    FeeRecordTotalAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordIsPaid = false,
+                    FeeRecordPaidDate = null,
+                    FeeRecordDueDate = DateHelper.GetEndOfMonth(1, 2025),
+                    FeeRecordIsOverdue = true,
+                    FeeRecordedByUserId = maria.UserId
+                },
+                // Feb — unpaid + 100 carryover → overdue
+                new FeeRecord
+                {
+                    ChildId = marco.ChildId,
+                    FeeRecordMonth = 2,
+                    FeeRecordYear = 2025,
+                    FeeRecordMonthlyAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordCarryOver = 100.00m,  // Jan unpaid
+                    FeeRecordTotalAmount = 200.00m,
+                    FeeRecordIsPaid = false,
+                    FeeRecordPaidDate = null,
+                    FeeRecordDueDate = DateHelper.GetEndOfMonth(2, 2025),
+                    FeeRecordIsOverdue = true,
+                    FeeRecordedByUserId = maria.UserId
+                },
+                // Mar — unpaid + 200 carryover → overdue
+                new FeeRecord
+                {
+                    ChildId = marco.ChildId,
+                    FeeRecordMonth = 3,
+                    FeeRecordYear = 2025,
+                    FeeRecordMonthlyAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordCarryOver = 200.00m,  // Feb total unpaid
+                    FeeRecordTotalAmount = 300.00m,
+                    FeeRecordIsPaid = false,
+                    FeeRecordPaidDate = null,
+                    FeeRecordDueDate = DateHelper.GetEndOfMonth(3, 2025),
+                    FeeRecordIsOverdue = true,
+                    FeeRecordedByUserId = maria.UserId
+                },
+                // Apr — unpaid + 300 carryover → overdue
+                new FeeRecord
+                {
+                    ChildId = marco.ChildId,
+                    FeeRecordMonth = 4,
+                    FeeRecordYear = 2025,
+                    FeeRecordMonthlyAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordCarryOver = 300.00m,  // Mar total unpaid
+                    FeeRecordTotalAmount = 400.00m,
+                    FeeRecordIsPaid = false,
+                    FeeRecordPaidDate = null,
+                    FeeRecordDueDate = DateHelper.GetEndOfMonth(4, 2025),
+                    FeeRecordIsOverdue = true,
+                    FeeRecordedByUserId = maria.UserId
+                },
 
-                // Isabella — paid April
-                new FeeRecord { ChildId = isabella.ChildId, FeeRecordMonth = 4, FeeRecordYear = 2025, FeeRecordAmount = 50.00m, FeeRecordIsPaid = true, FeeRecordPaidDate = new DateTime(2025, 4, 11), FeeRecordedByUserId = jose.UserId },
+                // ── ISABELLA ─────────────────────────────────────
+                // Jan — paid
+                new FeeRecord
+                {
+                    ChildId = isabella.ChildId,
+                    FeeRecordMonth = 1,
+                    FeeRecordYear = 2025,
+                    FeeRecordMonthlyAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordCarryOver = 0.00m,
+                    FeeRecordTotalAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordIsPaid = true,
+                    FeeRecordPaidDate = new DateTime(2025, 1, 25),
+                    FeeRecordDueDate = DateHelper.GetEndOfMonth(1, 2025),
+                    FeeRecordIsOverdue = false,
+                    FeeRecordedByUserId = jose.UserId
+                },
+                // Feb — paid
+                new FeeRecord
+                {
+                    ChildId = isabella.ChildId,
+                    FeeRecordMonth = 2,
+                    FeeRecordYear = 2025,
+                    FeeRecordMonthlyAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordCarryOver = 0.00m,
+                    FeeRecordTotalAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordIsPaid = true,
+                    FeeRecordPaidDate = new DateTime(2025, 2, 20),
+                    FeeRecordDueDate = DateHelper.GetEndOfMonth(2, 2025),
+                    FeeRecordIsOverdue = false,
+                    FeeRecordedByUserId = jose.UserId
+                },
+                // Mar — paid
+                new FeeRecord
+                {
+                    ChildId = isabella.ChildId,
+                    FeeRecordMonth = 3,
+                    FeeRecordYear = 2025,
+                    FeeRecordMonthlyAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordCarryOver = 0.00m,
+                    FeeRecordTotalAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordIsPaid = true,
+                    FeeRecordPaidDate = new DateTime(2025, 3, 18),
+                    FeeRecordDueDate = DateHelper.GetEndOfMonth(3, 2025),
+                    FeeRecordIsOverdue = false,
+                    FeeRecordedByUserId = jose.UserId
+                },
+                // Apr — paid
+                new FeeRecord
+                {
+                    ChildId = isabella.ChildId,
+                    FeeRecordMonth = 4,
+                    FeeRecordYear = 2025,
+                    FeeRecordMonthlyAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordCarryOver = 0.00m,
+                    FeeRecordTotalAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordIsPaid = true,
+                    FeeRecordPaidDate = new DateTime(2025, 4, 11),
+                    FeeRecordDueDate = DateHelper.GetEndOfMonth(4, 2025),
+                    FeeRecordIsOverdue = false,
+                    FeeRecordedByUserId = jose.UserId
+                },
 
-                // Carlos — unpaid April
-                new FeeRecord { ChildId = carlos.ChildId, FeeRecordMonth = 4, FeeRecordYear = 2025, FeeRecordAmount = 50.00m, FeeRecordIsPaid = false, FeeRecordPaidDate = null, FeeRecordedByUserId = jose.UserId }
+                // ── CARLOS ───────────────────────────────────────
+                // Jan — unpaid → overdue
+                new FeeRecord
+                {
+                    ChildId = carlos.ChildId,
+                    FeeRecordMonth = 1,
+                    FeeRecordYear = 2025,
+                    FeeRecordMonthlyAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordCarryOver = 0.00m,
+                    FeeRecordTotalAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordIsPaid = false,
+                    FeeRecordPaidDate = null,
+                    FeeRecordDueDate = DateHelper.GetEndOfMonth(1, 2025),
+                    FeeRecordIsOverdue = true,
+                    FeeRecordedByUserId = jose.UserId
+                },
+                // Feb — paid (cleared Jan carryover)
+                new FeeRecord
+                {
+                    ChildId = carlos.ChildId,
+                    FeeRecordMonth = 2,
+                    FeeRecordYear = 2025,
+                    FeeRecordMonthlyAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordCarryOver = 100.00m,  // Jan unpaid
+                    FeeRecordTotalAmount = 200.00m,
+                    FeeRecordIsPaid = true,
+                    FeeRecordPaidDate = new DateTime(2025, 2, 25),
+                    FeeRecordDueDate = DateHelper.GetEndOfMonth(2, 2025),
+                    FeeRecordIsOverdue = false,
+                    FeeRecordedByUserId = jose.UserId
+                },
+                // Mar — paid
+                new FeeRecord
+                {
+                    ChildId = carlos.ChildId,
+                    FeeRecordMonth = 3,
+                    FeeRecordYear = 2025,
+                    FeeRecordMonthlyAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordCarryOver = 0.00m,
+                    FeeRecordTotalAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordIsPaid = true,
+                    FeeRecordPaidDate = new DateTime(2025, 3, 22),
+                    FeeRecordDueDate = DateHelper.GetEndOfMonth(3, 2025),
+                    FeeRecordIsOverdue = false,
+                    FeeRecordedByUserId = jose.UserId
+                },
+                // Apr — unpaid → overdue
+                new FeeRecord
+                {
+                    ChildId = carlos.ChildId,
+                    FeeRecordMonth = 4,
+                    FeeRecordYear = 2025,
+                    FeeRecordMonthlyAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordCarryOver = 0.00m,
+                    FeeRecordTotalAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordIsPaid = false,
+                    FeeRecordPaidDate = null,
+                    FeeRecordDueDate = DateHelper.GetEndOfMonth(4, 2025),
+                    FeeRecordIsOverdue = true,
+                    FeeRecordedByUserId = jose.UserId
+                }
             );
 
             await db.SaveChangesAsync();

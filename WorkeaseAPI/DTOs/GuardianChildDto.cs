@@ -2,11 +2,11 @@
 {
     public class GuardianChildDto
     {
-        public int GuardianId { get; set; }
-        public string GuardianFullName { get; set; } = string.Empty;
-        public DateTime GuardianBirthDate { get; set; }
-        public string GuardianGender { get; set; } = string.Empty;
-        public string CdwCenterName { get; set; } = string.Empty;
+        public int ChildId { get; set; }
+        public string ChildFullName { get; set; } = string.Empty;
+        public DateTime ChildBirthDate { get; set; }
+        public string ChildGender { get; set; } = string.Empty;
+        public string CenterName { get; set; } = string.Empty;
         public List<HealthSummaryDto> ChildHealthHistory { get; set; } = new();
         public List<FeeSummaryDto> ChildFeeHistory { get; set; } = new();
     }

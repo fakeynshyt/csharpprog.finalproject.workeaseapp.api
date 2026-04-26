@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using WorkeaseAPI.DTOs;
 using WorkeaseAPI.Interfaces;
 using WorkeaseAPI.Models;
 
@@ -17,58 +18,94 @@ namespace WorkeaseAPI.Controllers
         public ChildrenController(IChildService childService)
             => _childService = childService;
 
-        // GET api/children
-        // Admin: all children. CDW: own center only.
         [HttpGet]
         [Authorize(Policy = "AdminAndCDW")]
-        public async Task<IActionResult> GetAllChildren()
+        public async Task<IActionResult> GetAll()
         {
-            var role = GetUserType();   // ✅ returns "Admin" or "CDW"
-            var userId = GetUserId();     // ✅ returns int
-
-            var children = role == "CDW"
-                ? await _childService.GetAllChildByCdwUserAsync(userId)
-                : await _childService.GetAllChildrenAsync();
-
-            return Ok(children);
+            try
+            {
+                var role = GetUserType();
+                var userId = GetUserId();
+                var children = role == "CDW"
+                    ? await _childService.GetChildByCdwUserAsync(userId)
+                    : await _childService.GetAllChildAsync();
+                return Ok(children);
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
         }
 
-        // GET api/children/mine
-        // Parent only — their child with full health and fee history
         [HttpGet("mine")]
         [Authorize(Policy = "ParentOnly")]
         public async Task<IActionResult> GetMyChild()
         {
-            var parentUserId = GetUserId();
-            var child = await _childService.GetGuardianChildByIdAsync(parentUserId);
-
-            return child is null
-                ? NotFound(new { message = "No child is linked to your account yet." })
-                : Ok(child);
+            try
+            {
+                var child = await _childService.GetChildByGuardianUserIdAsync(GetUserId());
+                return child is null
+                    ? NotFound(new { message = "No child linked to your account yet." })
+                    : Ok(child);
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
         }
 
-        // GET api/children/{id}
-        // Admin / CDW — get single child by ID
         [HttpGet("{id}")]
         [Authorize(Policy = "AdminAndCDW")]
         public async Task<IActionResult> GetById(int id)
         {
-            var child = await _childService.GetChildByIdAsync(id);
-            return child is null ? NotFound() : Ok(child);
+            try
+            {
+                var child = await _childService.GetChildByIdAsync(id);
+                return child is null ? NotFound() : Ok(child);
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
         }
 
-        // PUT api/children/{id}
-        // Admin only — update child info
+        [HttpPost]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> Create(CreateChildDto dto)
+        {
+            try
+            {
+                // ✅ Pass admin userId so fee is recorded under admin
+                var created = await _childService.CreateChildWithGuardianAsync(dto, GetUserId());
+                return CreatedAtAction(nameof(GetById),
+                    new { id = created.ChildId }, created);
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
+        }
+
         [HttpPut("{id}")]
         [Authorize(Policy = "AdminOnly")]
-        public async Task<IActionResult> Update(int id, Child child)
+        public async Task<IActionResult> Update(int id, UpdateChildDto dto)  // ✅ DTO
         {
-            var result = await _childService.UpdateChildAsync(id, child);
-            return result ? NoContent() : NotFound();
+            try
+            {
+                var result = await _childService.UpdateChildAsync(id, dto);
+                return result ? NoContent() : NotFound();
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
         }
 
-        // PUT api/children/{id}/link-parent/{parentUserId}
-        // Admin only — link parent to child separately
         [HttpPut("{id}/link-parent/{parentUserId}")]
         [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> LinkParent(int id, int parentUserId)
@@ -80,22 +117,28 @@ namespace WorkeaseAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
             }
         }
 
-        // DELETE api/children/{id}
-        // Admin only — soft delete
         [HttpDelete("{id}")]
         [Authorize(Policy = "AdminOnly")]
-        public async Task<IActionResult> Delete(int id) =>
-            await _childService.DeleteChildAsync(id) ? NoContent() : NotFound();
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                var result = await _childService.DeleteChildAsync(id);
+                return result ? NoContent() : NotFound();
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
+        }
 
-        // ── Helpers ───────────────────────────────────────────────
-        private int GetUserId() =>
-            int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-
-        private string GetUserType() =>
-            User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
+        private int GetUserId() => int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        private string GetUserType() => User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
     }
 }

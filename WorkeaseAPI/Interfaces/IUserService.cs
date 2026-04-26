@@ -1,4 +1,5 @@
-﻿using WorkeaseAPI.Models;
+﻿using WorkeaseAPI.DTOs;
+using WorkeaseAPI.Models;
 
 namespace WorkeaseAPI.Interfaces
 {
@@ -6,8 +7,8 @@ namespace WorkeaseAPI.Interfaces
     {
         Task<IEnumerable<User?>> GetAllUsersAsync();
         Task<User?> GetUserByIdAsync(int id);
-        Task<User> CreateUserAsync(User user, string plainPassword);
-        Task<bool> AdminUpdateUserAsync(int id, User updatedUser);
+        Task<User> CreateUserAsync(CreateUserDto dto);
+        Task<bool> AdminUpdateUserAsync(int id, UpdateUserDto dto);
         Task<bool> DeleteUserAsync(int id);
     }
 }

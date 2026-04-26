@@ -142,7 +142,7 @@ namespace WorkeaseAPI.Services
                     ChildFullName = c.ChildFirstName + " " + c.ChildLastName,
                     ChildBirthDate = c.ChildBirthDate,
                     ChildGender = c.ChildGender,
-                    CdwCenterName = c.Center!.CenterName
+                    CenterName = c.Center!.CenterName
                 })
                 .ToListAsync();
 
@@ -191,7 +191,7 @@ namespace WorkeaseAPI.Services
                 {
                     FeeMonth = f.FeeRecordMonth,
                     FeeYear = f.FeeRecordYear,
-                    FeeAmount = f.FeeRecordAmount,
+                    FeeMonthlyAmount = f.FeeRecordMonthlyAmount,
                     IsPaid = f.FeeRecordIsPaid,
                     FeePaidDate = f.FeeRecordPaidDate
                 })
@@ -199,11 +199,11 @@ namespace WorkeaseAPI.Services
 
             package.MyChild = new GuardianChildDto
             {
-                GuardianId = child.ChildId,
-                GuardianFullName = child.ChildFirstName + " " + child.ChildLastName,
-                GuardianBirthDate = child.ChildBirthDate,
-                GuardianGender = child.ChildGender,
-                CdwCenterName = child.Center?.CenterName ?? string.Empty,
+                ChildId = child.ChildId,
+                ChildFullName = child.ChildFirstName + " " + child.ChildLastName,
+                ChildBirthDate = child.ChildBirthDate,
+                ChildGender = child.ChildGender,
+                CenterName = child.Center?.CenterName ?? string.Empty,
                 ChildHealthHistory = healthHistory,
                 ChildFeeHistory = feeHistory
             };
@@ -221,7 +221,7 @@ namespace WorkeaseAPI.Services
                     ChildFullName = c.ChildFirstName + " " + c.ChildLastName,
                     ChildBirthDate = c.ChildBirthDate,
                     ChildGender = c.ChildGender,
-                    CdwCenterName = c.Center!.CenterName
+                    CenterName = c.Center!.CenterName
                 })
                 .ToListAsync();
         }

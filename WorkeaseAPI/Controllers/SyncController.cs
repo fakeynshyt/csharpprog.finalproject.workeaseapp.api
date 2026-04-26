@@ -7,8 +7,9 @@ using WorkeaseAPI.Interfaces;
 
 namespace WorkeaseAPI.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
+    [Authorize]
     public class SyncController : ControllerBase
     {
         private readonly ISyncService _syncService;
@@ -16,30 +17,42 @@ namespace WorkeaseAPI.Controllers
         public SyncController(ISyncService syncService)
             => _syncService = syncService;
 
-        // GET api/sync/initial-download
-        // Called once after first login — downloads everything for this user
         [HttpGet("initial-download")]
         [Authorize(Policy = "AllRoles")]
         public async Task<IActionResult> InitialDownload()
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var role = User.FindFirst(ClaimTypes.Role)?.Value!;
-
-            var package = await _syncService.GetInitialPackageAsync(userId, role);
-            return Ok(package);
+            try
+            {
+                var userId = GetUserId();
+                var role = GetUserType();
+                var package = await _syncService.GetInitialPackageAsync(userId, role);
+                return Ok(package);
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
         }
 
-        // POST api/sync/upload
-        // CDW only — sends all records saved offline
         [HttpPost("upload")]
         [Authorize(Policy = "AdminAndCDW")]
         public async Task<IActionResult> Upload(SyncPayloadDto payload)
         {
-            // Override the userId from the JWT — client cannot fake this
-            payload.CdwUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-
-            var result = await _syncService.ProcessSyncAsync(payload);
-            return Ok(result);
+            try
+            {
+                payload.CdwUserId = GetUserId();
+                var result = await _syncService.ProcessSyncAsync(payload);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
         }
+
+        private int GetUserId() => int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        private string GetUserType() => User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
     }
 }

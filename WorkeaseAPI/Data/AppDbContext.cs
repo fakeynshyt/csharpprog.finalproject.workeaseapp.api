@@ -74,18 +74,18 @@ namespace WorkeaseAPI.Data
 
             // ── Report file stored as varbinary(max) ──────────────
             modelBuilder.Entity<Report>()
-                .Property(r => r.FileData)
+                .Property(r => r.ReportFileData)
                 .HasColumnType("varbinary(max)");
 
             // ── Decimal precision ─────────────────────────────────
-            modelBuilder.Entity<HealthRecord>()
-                .Property(h => h.HealthRecordWeigtKg).HasPrecision(5, 2);
-            modelBuilder.Entity<HealthRecord>()
-                .Property(h => h.HealthRecordHeightCm).HasPrecision(5, 2);
             modelBuilder.Entity<FeeRecord>()
-                .Property(f => f.FeeRecordAmount).HasPrecision(10, 2);
+    .Property(f => f.FeeRecordMonthlyAmount).HasPrecision(10, 2);
+            modelBuilder.Entity<FeeRecord>()
+                .Property(f => f.FeeRecordCarryOver).HasPrecision(10, 2);
+            modelBuilder.Entity<FeeRecord>()
+                .Property(f => f.FeeRecordTotalAmount).HasPrecision(10, 2);
             modelBuilder.Entity<Report>()
-                .Property(r => r.FileData).IsRequired(false); 
+                .Property(r => r.ReportFileData).IsRequired(false); 
         }
     }
 }

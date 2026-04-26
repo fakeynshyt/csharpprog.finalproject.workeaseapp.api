@@ -1,8 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using WorkeaseAPI.DTOs;
 using WorkeaseAPI.Interfaces;
 using WorkeaseAPI.Models;
 
@@ -11,12 +8,12 @@ namespace WorkeaseAPI.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class UsersController : ControllerBase
+    public class CentersController : ControllerBase
     {
-        private readonly IUserService _userService;
+        private readonly ICenterService _centerService;
 
-        public UsersController(IUserService userService)
-            => _userService = userService;
+        public CentersController(ICenterService centerService)
+            => _centerService = centerService;
 
         [HttpGet]
         [Authorize(Policy = "AdminOnly")]
@@ -24,8 +21,8 @@ namespace WorkeaseAPI.Controllers
         {
             try
             {
-                var users = await _userService.GetAllUsersAsync();
-                return Ok(users);
+                var centers = await _centerService.GetAllCentersAsync();
+                return Ok(centers);
             }
             catch (Exception ex)
             {
@@ -34,14 +31,14 @@ namespace WorkeaseAPI.Controllers
             }
         }
 
-        [HttpGet("me")]
-        [Authorize(Policy = "AllRoles")]
-        public async Task<IActionResult> GetMe()
+        [HttpGet("{id}")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> GetById(int id)
         {
             try
             {
-                var user = await _userService.GetUserByIdAsync(GetUserId());
-                return user is null ? NotFound() : Ok(user);
+                var center = await _centerService.GetCenterByIdAsync(id);
+                return center is null ? NotFound() : Ok(center);
             }
             catch (Exception ex)
             {
@@ -52,13 +49,13 @@ namespace WorkeaseAPI.Controllers
 
         [HttpPost]
         [Authorize(Policy = "AdminOnly")]
-        public async Task<IActionResult> Create(CreateUserDto dto) 
+        public async Task<IActionResult> Create(Center center)
         {
             try
             {
-                var created = await _userService.CreateUserAsync(dto);
-                return CreatedAtAction(nameof(GetUserId),
-                    new { id = created.UserId }, created);
+                var created = await _centerService.CreateCenterAsync(center);
+                return CreatedAtAction(nameof(GetById),
+                    new { id = created.CenterId }, created);
             }
             catch (Exception ex)
             {
@@ -69,14 +66,11 @@ namespace WorkeaseAPI.Controllers
 
         [HttpPut("{id}")]
         [Authorize(Policy = "AdminOnly")]
-        [ProducesResponseType(204)]                          
-        [ProducesResponseType(typeof(object), 400)]          
-        [ProducesResponseType(404)]                          
-        public async Task<IActionResult> AdminUpdate(int id, UpdateUserDto dto)
+        public async Task<IActionResult> Update(int id, Center center)
         {
             try
             {
-                var result = await _userService.AdminUpdateUserAsync(id, dto);
+                var result = await _centerService.UpdateCenterAsync(id, center);
                 return result ? NoContent() : NotFound();
             }
             catch (Exception ex)
@@ -92,7 +86,7 @@ namespace WorkeaseAPI.Controllers
         {
             try
             {
-                var result = await _userService.DeleteUserAsync(id);
+                var result = await _centerService.DeleteCenterAsync(id);
                 return result ? NoContent() : NotFound();
             }
             catch (Exception ex)
@@ -101,8 +95,5 @@ namespace WorkeaseAPI.Controllers
                 return BadRequest(new { message = inner });
             }
         }
-
-        private int GetUserId() => int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-        private string GetUserType() => User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
     }
 }

@@ -7,11 +7,11 @@
         public User? User { get; set; }
         public int CenterId { get; set; }
         public Center? Center { get; set; }
-        public int Month { get; set; }
-        public int Year { get; set; }
-        public string Format { get; set; } = "PDF"; // "PDF" or "Word"
+        public int ReportMonth { get; set; }
+        public int ReportYear { get; set; }
+        public string ReportFormat { get; set; } = "PDF"; // "PDF" or "Word"
         public string Observations { get; set; } = string.Empty;
-        public byte[]? FileData { get; set; }
-        public DateTime GeneratedAt { get; set; } = DateTime.UtcNow;
+        public byte[]? ReportFileData { get; set; }
+        public DateTime ReportGeneratedAt { get; set; } = DateTime.UtcNow;
     }
 }

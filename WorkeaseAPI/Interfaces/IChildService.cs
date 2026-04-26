@@ -5,13 +5,13 @@ namespace WorkeaseAPI.Interfaces
 {
     public interface IChildService
     {
-        Task<IEnumerable<ChildReadDto>> GetAllChildrenAsync();
-        Task<IEnumerable<ChildReadDto>> GetAllChildByCdwUserAsync(int cdwUserId);
-        Task<Child?> GetChildByIdAsync(int childId);
-        Task<GuardianChildDto> GetGuardianChildByIdAsync(int guardianUserId);
-        Task<Child> CreateChildAsync(Child child);
-        Task<bool> LinkParentAsync(int childId, int guardianUserId);
-        Task<bool> UpdateChildAsync(int childId, Child updatedChild);
-        Task<bool> DeleteChildAsync(int childId);
+        Task<IEnumerable<ChildReadDto>> GetAllChildAsync();
+        Task<IEnumerable<ChildReadDto>> GetChildByCdwUserAsync(int cdwUserId);
+        Task<Child?> GetChildByIdAsync(int id);
+        Task<GuardianChildDto?> GetChildByGuardianUserIdAsync(int parentUserId);
+        Task<Child> CreateChildWithGuardianAsync(CreateChildDto dto, int createdByUser);
+        Task<bool> UpdateChildAsync(int id, UpdateChildDto dto);
+        Task<bool> LinkParentAsync(int childId, int parentUserId);
+        Task<bool> DeleteChildAsync(int id);
     }
 }
