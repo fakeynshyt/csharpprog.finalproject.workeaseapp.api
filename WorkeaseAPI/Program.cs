@@ -34,6 +34,8 @@ namespace WorkeaseAPI
             builder.Services.AddScoped<ISyncService, SyncService>();
             builder.Services.AddScoped<IReportService, ReportService>();
             builder.Services.AddScoped<IAutoFeeService, AutoFeeService>();
+            builder.Services.AddScoped<IAttendanceService, AttendanceService>();
+            builder.Services.AddScoped<IGrowthService, GrowthService>();
 
             // ─────────────────────────────────────────────
             // 3. AUTHENTICATION (JWT)

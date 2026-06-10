@@ -5,7 +5,7 @@ namespace WorkeaseAPI.Interfaces
 {
     public interface ICenterService
     {
-        Task<IEnumerable<CenterDetailsDto>> GetAllCentersAsync();
+        Task<IEnumerable<Center>> GetAllCentersAsync();
         Task<CenterDetailsDto?> GetCenterByIdAsync(int centerId);
         Task<Center> CreateCenterAsync(Center center);
         Task<bool> UpdateCenterAsync(int centerId, Center updated);

@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration.UserSecrets;
 using WorkeaseAPI.Data;
 using WorkeaseAPI.Helpers;
 using WorkeaseAPI.Interfaces;
@@ -10,7 +9,6 @@ namespace WorkeaseAPI.Services
     public class AutoFeeService : IAutoFeeService
     {
         private readonly AppDbContext _db;
-        private const decimal MONTHLY_CONTRIBUTION = 100.00m;
 
         public AutoFeeService(AppDbContext db) => _db = db;
 
@@ -19,11 +17,9 @@ namespace WorkeaseAPI.Services
             var child = await _db.Children.FindAsync(childId);
             if (child is null) return;
 
-            // Get enrollment month and year
             var enrollMonth = child.ChildEnrolledDate.Month;
             var enrollYear = child.ChildEnrolledDate.Year;
 
-            // Check if fee already exists for this month
             var exists = await _db.FeeRecords
                                   .AnyAsync(f => f.ChildId == childId
                                              && f.FeeRecordMonth == enrollMonth
@@ -35,94 +31,117 @@ namespace WorkeaseAPI.Services
                 ChildId = childId,
                 FeeRecordMonth = enrollMonth,
                 FeeRecordYear = enrollYear,
-                FeeRecordMonthlyAmount = MONTHLY_CONTRIBUTION,
+                FeeRecordMonthlyAmount = 100.00m,
                 FeeRecordCarryOver = 0.00m,
-                FeeRecordTotalAmount = MONTHLY_CONTRIBUTION, // 100 only
+                FeeRecordTotalAmount = 100.00m,
                 FeeRecordIsPaid = false,
                 FeeRecordPaidDate = null,
                 FeeRecordDueDate = DateHelper.GetEndOfMonth(enrollMonth, enrollYear),
                 FeeRecordIsOverdue = false,
-                FeeRecordedByUserId = enrolledByUserId
+                FeeRecordedByUserId = enrolledByUserId,
+
+                // ✅ Generate receipt on first fee too
+                FeeRecordReceiptNo = ReceiptGenerator.GenerateUnique(enrollMonth, enrollYear)
             };
 
             _db.FeeRecords.Add(fee);
             await _db.SaveChangesAsync();
 
             Console.WriteLine($"✅ First fee generated for ChildId {childId}: " +
-                              $"{enrollMonth}/{enrollYear} — ₱{fee.FeeRecordTotalAmount}");
+                              $"{enrollMonth}/{enrollYear} — ₱100");
         }
 
         public async Task GenerateMonthlyFeesAsync()
         {
             var now = DateTime.UtcNow;
-            var nextMonth = now.Month == 12 ? 1 : now.Month + 1;
-            var nextYear = now.Month == 12 ? now.Year + 1 : now.Year;
 
-            // Get all active children
+            // ── Get previous month ────────────────────────────────────────
+            var prevMonth = now.Month == 1 ? 12 : now.Month - 1;
+            var prevYear = now.Month == 1 ? now.Year - 1 : now.Year;
+
+            // ── Check if previous month has ended ─────────────────────────
+            var endOfPrevMonth = DateHelper.GetEndOfMonth(prevMonth, prevYear);
+
+            if (now <= endOfPrevMonth)
+                throw new Exception(
+                    $"Cannot generate monthly fees yet. " +
+                    $"Previous month ({new DateTime(prevYear, prevMonth, 1):MMMM yyyy}) " +
+                    $"has not ended. " +
+                    $"Please wait until after {endOfPrevMonth:MMMM dd, yyyy}.");
+
+            // ── Generate for current month ────────────────────────────────
+            var targetMonth = now.Month;
+            var targetYear = now.Year;
+
             var children = await _db.Children
                                     .Where(c => c.ChildIsActive)
                                     .ToListAsync();
 
+            int generated = 0;
+            int skipped = 0;
+
             foreach (var child in children)
             {
-                // Skip if fee for next month already exists
+                // Skip if already generated for this month
                 var exists = await _db.FeeRecords
                                       .AnyAsync(f => f.ChildId == child.ChildId
-                                                 && f.FeeRecordMonth == nextMonth
-                                                 && f.FeeRecordYear == nextYear);
-                if (exists) continue;
-
-                // Get current month's fee to check for carry over
-                var currentFee = await _db.FeeRecords
-                                          .FirstOrDefaultAsync(f =>
-                                              f.ChildId == child.ChildId
-                                           && f.FeeRecordMonth == now.Month
-                                           && f.FeeRecordYear == now.Year);
-
-                // Calculate carry over from unpaid current month
-                decimal carryOver = 0.00m;
-                if (currentFee is not null && !currentFee.FeeRecordIsPaid)
+                                                 && f.FeeRecordMonth == targetMonth
+                                                 && f.FeeRecordYear == targetYear);
+                if (exists)
                 {
-                    // Mark current as overdue
-                    currentFee.FeeRecordIsOverdue = true;
-
-                    // Carry the full unpaid total to next month
-                    carryOver = currentFee.FeeRecordTotalAmount;
+                    skipped++;
+                    continue;
                 }
 
-                // Create next month's fee
-                var nextFee = new FeeRecord
+                // Get all unpaid fees before this month
+                var allUnpaid = await _db.FeeRecords
+                                         .Where(f => f.ChildId == child.ChildId
+                                                  && !f.FeeRecordIsPaid
+                                                  && (f.FeeRecordYear < targetYear ||
+                                                     (f.FeeRecordYear == targetYear &&
+                                                      f.FeeRecordMonth < targetMonth)))
+                                         .ToListAsync();
+
+                decimal carryOver = allUnpaid.Sum(f => f.FeeRecordMonthlyAmount);
+
+                // Mark all previous unpaid as overdue
+                foreach (var unpaid in allUnpaid)
+                    unpaid.FeeRecordIsOverdue = true;
+
+                var newFee = new FeeRecord
                 {
                     ChildId = child.ChildId,
-                    FeeRecordMonth = nextMonth,
-                    FeeRecordYear = nextYear,
-                    FeeRecordMonthlyAmount = MONTHLY_CONTRIBUTION,
+                    FeeRecordMonth = targetMonth,
+                    FeeRecordYear = targetYear,
+                    FeeRecordMonthlyAmount = 100.00m,
                     FeeRecordCarryOver = carryOver,
-                    FeeRecordTotalAmount = MONTHLY_CONTRIBUTION + carryOver,
+                    FeeRecordTotalAmount = 100.00m + carryOver,
                     FeeRecordIsPaid = false,
                     FeeRecordPaidDate = null,
-                    FeeRecordDueDate = DateHelper.GetEndOfMonth(nextMonth, nextYear),
+                    FeeRecordDueDate = DateHelper.GetEndOfMonth(targetMonth, targetYear),
                     FeeRecordIsOverdue = false,
-                    FeeRecordedByUserId = 1  // system/admin
+                    FeeRecordedByUserId = 1,
+                    FeeRecordReceiptNo = ReceiptGenerator.GenerateUnique(targetMonth, targetYear)
                 };
 
-                _db.FeeRecords.Add(nextFee);
+                _db.FeeRecords.Add(newFee);
+                generated++;
 
                 Console.WriteLine($"✅ Fee generated for ChildId {child.ChildId}: " +
-                                  $"{nextMonth}/{nextYear} — " +
-                                  $"₱{MONTHLY_CONTRIBUTION} + " +
-                                  $"₱{carryOver} carry over = " +
-                                  $"₱{nextFee.FeeRecordTotalAmount}");
+                                  $"{targetMonth}/{targetYear} — " +
+                                  $"₱100 + ₱{carryOver} carryover = " +
+                                  $"₱{newFee.FeeRecordTotalAmount}");
             }
 
             await _db.SaveChangesAsync();
+
+            Console.WriteLine($"✅ Done — Generated: {generated}, Skipped: {skipped}");
         }
 
         public async Task ProcessOverdueFeesAsync()
         {
             var now = DateTime.UtcNow;
 
-            // Get all unpaid fees where due date has passed
             var overdueFees = await _db.FeeRecords
                                        .Where(f => !f.FeeRecordIsPaid
                                                 && !f.FeeRecordIsOverdue
@@ -132,9 +151,8 @@ namespace WorkeaseAPI.Services
             foreach (var fee in overdueFees)
             {
                 fee.FeeRecordIsOverdue = true;
-                Console.WriteLine($"⚠️ Fee overdue — ChildId {fee.ChildId}: " +
-                                  $"{fee.FeeRecordMonth}/{fee.FeeRecordYear} " +
-                                  $"₱{fee.FeeRecordTotalAmount}");
+                Console.WriteLine($"⚠️ Overdue — ChildId {fee.ChildId}: " +
+                                  $"{fee.FeeRecordMonth}/{fee.FeeRecordYear}");
             }
 
             await _db.SaveChangesAsync();

@@ -17,7 +17,7 @@ namespace WorkeaseAPI.Services
             _db = db;
             _config = config;
         }
-        public async Task<LoginResponseDto?> LoginAsync(LoginRequestDto loginRequestDto)
+        public async Task<LoginResponse?> LoginAsync(LoginRequest loginRequestDto)
         {
             var user = _db.Users
                 .FirstOrDefault(u => u.UserEmail == loginRequestDto.LoginEmail && u.UserIsActive);
@@ -30,7 +30,7 @@ namespace WorkeaseAPI.Services
 
             var token = GenerateToken(user);
 
-            return new LoginResponseDto
+            return new LoginResponse
             {
                 Token = token,
                 UserType = user.UserType,

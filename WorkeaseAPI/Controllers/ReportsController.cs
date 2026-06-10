@@ -16,42 +16,102 @@ namespace WorkeaseAPI.Controllers
         public ReportsController(IReportService reportService)
             => _reportService = reportService;
 
-        // POST api/reports/generate
-        // CDW only — generate monthly report
-        [HttpPost("generate")]
-        [Authorize(Policy = "AdminAndCDW")]
-        public async Task<IActionResult> Generate(GenerateReportRequest request)
+        // POST api/reports/pdf-summary
+        [HttpPost("pdf-summary")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> GeneratePdfSummary(GeneratePdfSummaryDto dto)
         {
-            var userId = GetUserId();
-            var summary = await _reportService.GenerateMonthlyAsync(userId, request);
-            return Ok(summary);
+            try
+            {
+                var report = await _reportService.GeneratePdfSummaryAsync(dto, GetUserId());
+                return Ok(report);
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
+        }
+
+        // POST api/reports/fee-report
+        [HttpPost("fee-report")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> GenerateReportFee(GenerateReportFeeDto dto)
+        {
+            try
+            {
+                var report = await _reportService.GenerateReportFeeAsync(dto, GetUserId());
+                return Ok(report);
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
+        }
+
+        // POST api/reports/narrative
+        [HttpPost("narrative")]
+        [Authorize(Policy = "AdminAndCDW")]
+        public async Task<IActionResult> GenerateNarrative(GenerateNarrativeDto dto)
+        {
+            try
+            {
+                var report = await _reportService.GenerateNarrativeAsync(dto, GetUserId());
+                return Ok(report);
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
+        }
+
+        [HttpPost("master-list")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> GenerateMasterList(GenerateMasterListDto dto)
+        {
+            try
+            {
+                var report = await _reportService.GenerateMasterListAsync(dto, GetUserId());
+                return Ok(report);
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
         }
 
         // GET api/reports/{id}/download
-        // CDW only — download their generated report file
         [HttpGet("{id}/download")]
         [Authorize(Policy = "AdminAndCDW")]
         public async Task<IActionResult> Download(int id)
         {
-            var userId = GetUserId();
-            var (file, format) = await _reportService.DownloadAsync(id, userId);
+            try
+            {
+                var (file, format, title) = await _reportService.DownloadAsync(id);
 
-            var (contentType, extension) = format.ToUpper() == "WORD"
-                ? ("application/vnd.openxmlformats-officedocument.wordprocessingml.document", "docx")
-                : ("application/pdf", "pdf");
+                var (contentType, extension) = format.ToUpper() switch
+                {
+                    "EXCEL" => ("application/vnd.openxmlformats-officedocument" +
+                                ".spreadsheetml.sheet", "xlsx"),
+                    "WORD" => ("application/vnd.openxmlformats-officedocument" +
+                                ".wordprocessingml.document", "docx"),
+                    _ => ("application/pdf", "pdf")
+                };
 
-            return File(file, contentType, $"WorkEase_Report_{id}.{extension}");
-        }
+                var safeTitle = title.Replace(" ", "_")
+                                     .Replace("—", "-")
+                                     .Replace("/", "-");
 
-        // GET api/reports/mine
-        // CDW — see list of their previously generated reports
-        [HttpGet("mine")]
-        [Authorize(Policy = "AdminAndCDW")]
-        public async Task<IActionResult> GetMyReports()
-        {
-            var userId = GetUserId();
-            var reports = await _reportService.GetMyReportsAsync(userId);
-            return Ok(reports);
+                return File(file, contentType, $"{safeTitle}.{extension}");
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
         }
 
         private int GetUserId() =>

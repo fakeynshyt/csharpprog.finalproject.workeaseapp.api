@@ -26,9 +26,41 @@ namespace WorkeaseAPI.Controllers
             {
                 var role = GetUserType();
                 var userId = GetUserId();
-                var children = role == "CDW"
-                    ? await _childService.GetChildByCdwUserAsync(userId)
-                    : await _childService.GetAllChildAsync();
+
+                if (role == "CDW")
+                {
+                    var centerId = await _childService.GetCenterIdByUserAsync(userId);
+
+                    if (centerId is null)
+                        return Ok(Enumerable.Empty<ChildSummaryDto>());
+
+                    var children = await _childService
+                                         .GetChildrenByCenterAsync(centerId.Value);
+                    return Ok(children);
+                }
+
+                // Admin sees all
+                return Ok(await _childService.GetAllChildAsync());
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
+        }
+
+        // GET api/children/mine
+        // ✅ Returns ALL children of parent — not just one
+        [HttpGet("mine")]
+        [Authorize(Policy = "ParentOnly")]
+        public async Task<IActionResult> GetMyChildren()
+        {
+            try
+            {
+                var parentUserId = GetUserId();
+                var children = await _childService
+                                         .GetChildByGuardianUserIdAsync(parentUserId);
+
                 return Ok(children);
             }
             catch (Exception ex)
@@ -38,16 +70,43 @@ namespace WorkeaseAPI.Controllers
             }
         }
 
-        [HttpGet("mine")]
-        [Authorize(Policy = "ParentOnly")]
-        public async Task<IActionResult> GetMyChild()
+        // Controllers/ChildrenController.cs
+
+        // PUT api/children/{childId}/link-parent/{parentId}
+        // Admin links a child to a parent account
+        [HttpPut("{childId}/link-parent/{parentId}")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> LinkParent(int childId, int parentId)
         {
             try
             {
-                var child = await _childService.GetChildByGuardianUserIdAsync(GetUserId());
-                return child is null
-                    ? NotFound(new { message = "No child linked to your account yet." })
-                    : Ok(child);
+                var result = await _childService.LinkParentAsync(childId, parentId);
+                return Ok(new
+                {
+                    message = "Child linked to parent successfully.",
+                    childId = childId,
+                    parentId = parentId
+                });
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
+        }
+
+        // PUT api/children/{childId}/unlink-parent
+        // Admin removes the parent link from a child
+        [HttpPut("{childId}/unlink-parent")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> UnlinkParent(int childId)
+        {
+            try
+            {
+                var result = await _childService.UnlinkParentAsync(childId);
+                return result
+                    ? Ok(new { message = "Parent unlinked from child successfully." })
+                    : NotFound(new { message = "Child not found." });
             }
             catch (Exception ex)
             {
@@ -97,22 +156,6 @@ namespace WorkeaseAPI.Controllers
             try
             {
                 var result = await _childService.UpdateChildAsync(id, dto);
-                return result ? NoContent() : NotFound();
-            }
-            catch (Exception ex)
-            {
-                var inner = ex.InnerException?.Message ?? ex.Message;
-                return BadRequest(new { message = inner });
-            }
-        }
-
-        [HttpPut("{id}/link-parent/{parentUserId}")]
-        [Authorize(Policy = "AdminOnly")]
-        public async Task<IActionResult> LinkParent(int id, int parentUserId)
-        {
-            try
-            {
-                var result = await _childService.LinkParentAsync(id, parentUserId);
                 return result ? NoContent() : NotFound();
             }
             catch (Exception ex)

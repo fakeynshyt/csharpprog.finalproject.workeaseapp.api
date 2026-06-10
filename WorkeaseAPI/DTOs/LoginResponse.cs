@@ -1,6 +1,6 @@
 ﻿namespace WorkeaseAPI.DTOs
 {
-    public class LoginResponseDto
+    public class LoginResponse
     {
         public string Token { get; set; } = string.Empty;
         public int UserId { get; set; }

@@ -4,6 +4,6 @@ namespace WorkeaseAPI.Interfaces
 {
     public interface IAuthenticationService
     {
-        Task<LoginResponseDto?> LoginAsync(LoginRequestDto loginRequestDto);
+        Task<LoginResponse?> LoginAsync(LoginRequest loginRequestDto);
     }
 }

@@ -1,5 +1,4 @@
-﻿using DocumentFormat.OpenXml.Math;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using WorkeaseAPI.Data;
 using WorkeaseAPI.DTOs;
 using WorkeaseAPI.Helpers;
@@ -15,9 +14,15 @@ namespace WorkeaseAPI.Services
         {
             _db = db;
         }
+
+        private async Task<User?> FindUserAsync(int id) =>
+        await _db.Users
+                 .Include(u => u.Center)
+                 .FirstOrDefaultAsync(u => u.UserId == id
+                                        && u.UserIsActive == true);
         public async Task<bool> AdminUpdateUserAsync(int id, UpdateUserDto dto)
         {
-            var user = await GetUserByIdAsync(id);
+            var user = await FindUserAsync(id);
             if (user is null) return false;
 
             var emailConflict = await _db.Users
@@ -26,8 +31,7 @@ namespace WorkeaseAPI.Services
             if (emailConflict)
                 throw new Exception("Email is already used by another account.");
 
-            if (dto.CenterId == 0)
-                dto.CenterId = null;
+            if (dto.CenterId == 0) dto.CenterId = null;
 
             if (dto.UserType == "CDW")
             {
@@ -40,14 +44,14 @@ namespace WorkeaseAPI.Services
                     throw new Exception($"Center with ID {dto.CenterId} not found.");
             }
 
-            if (dto.UserType != "CDW")
-                dto.CenterId = null;
+            if (dto.UserType != "CDW") dto.CenterId = null;
 
             user.UserName = dto.UserName;
             user.UserEmail = dto.UserEmail;
             user.UserType = dto.UserType;
             user.CenterId = dto.CenterId;
-            user.UserIsActive = dto.UserIsActive;
+            user.UserHashPassword = AuthenticationService.HashPassword(dto.UserPasswordHashed);
+            user.UserUpdatedAt = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();
             return true;
@@ -55,17 +59,15 @@ namespace WorkeaseAPI.Services
 
         public async Task<User> CreateUserAsync(CreateUserDto dto)
         {
-            var (isValid, message) = PasswordValidator.Validate(dto.Password);
-            if (!isValid)
-                throw new Exception(message);
+            var (isValid, message) = PasswordValidator.Validate(dto.UserHashPassword);
+            if (!isValid) throw new Exception(message);
 
             var emailExists = await _db.Users
                                        .AnyAsync(u => u.UserEmail == dto.UserEmail);
             if (emailExists)
                 throw new Exception("Email is already in use.");
 
-            if (dto.CenterId == 0)
-                dto.CenterId = null;
+            if (dto.CenterId == 0) dto.CenterId = null;
 
             if (dto.UserType == "CDW")
             {
@@ -78,8 +80,7 @@ namespace WorkeaseAPI.Services
                     throw new Exception($"Center with ID {dto.CenterId} not found.");
             }
 
-            if (dto.UserType != "CDW")
-                dto.CenterId = null;
+            if (dto.UserType != "CDW") dto.CenterId = null;
 
             var user = new User
             {
@@ -87,9 +88,10 @@ namespace WorkeaseAPI.Services
                 UserEmail = dto.UserEmail,
                 UserType = dto.UserType,
                 CenterId = dto.CenterId,
-                UserHashPassword = AuthenticationService.HashPassword(dto.Password),
+                UserHashPassword = AuthenticationService.HashPassword(dto.UserHashPassword),
                 UserIsActive = true,
-                UserEnrolledAt = DateTime.UtcNow
+                UserCreatedAt = DateTime.UtcNow,
+                UserUpdatedAt = DateTime.UtcNow
             };
 
             _db.Users.Add(user);
@@ -98,29 +100,55 @@ namespace WorkeaseAPI.Services
         }
         public async Task<bool> DeleteUserAsync(int id)
         {
-            var user = await GetUserByIdAsync(id);
-            if (user == null) return false;
+            var user = await FindUserAsync(id);
+            if (user is null) return false;
 
             user.UserIsActive = false;
+            user.UserUpdatedAt = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();
-
             return true;
         }
 
-        public async Task<IEnumerable<User?>> GetAllUsersAsync() =>
+        public async Task<IEnumerable<CdwUserDto?>> GetAllUsersAsync() =>
             await _db.Users
-                .Include(u => u.Center)
-                .Where(u => u.UserIsActive)
-                .OrderBy(u => u.UserType)
-                .ThenBy(u => u.UserName)
-                .ToListAsync();
+                 .Include(u => u.Center)
+                 .Where(u => u.UserIsActive)
+                 .OrderBy(u => u.UserType)
+                 .ThenBy(u => u.UserName)
+                 .Select(u => new CdwUserDto
+                 {
+                     UserId = u.UserId,
+                     UserName = u.UserName,
+                     UserEmail = u.UserEmail,
+                     UserType = u.UserType,
+                     CenterName = u.Center != null ? u.Center.CenterName : null,
+                     UserIsActive = u.UserIsActive,
+                     UserHashPassword = string.Empty,
+                     UserCreatedAt = u.UserCreatedAt,
+                     UserUpdatedAt = u.UserUpdatedAt
+                 })
+                 .ToListAsync();
 
 
 
-        public async Task<User?> GetUserByIdAsync(int id) => 
-            await _db.Users
-                .Include(u => u.Center)
-                .FirstOrDefaultAsync(u => u.UserId == id && u.UserIsActive);
+        public async Task<CdwUserDto?> GetUserByIdAsync(int id)
+        {
+            var user = await FindUserAsync(id);
+            if (user is null) return null;
+
+            return new CdwUserDto
+            {
+                UserId = user.UserId,
+                UserName = user.UserName,
+                UserEmail = user.UserEmail,
+                UserType = user.UserType,
+                CenterName = user.Center?.CenterName,
+                CenterId = user.CenterId,
+                UserIsActive = user.UserIsActive,
+                UserCreatedAt = user.UserCreatedAt,
+                UserUpdatedAt = user.UserUpdatedAt
+            };
+        }
     }
 }

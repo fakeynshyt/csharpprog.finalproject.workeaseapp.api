@@ -1,4 +1,6 @@
-﻿namespace WorkeaseAPI.DTOs
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace WorkeaseAPI.DTOs
 {
     public class CreateHealthDto
     {
@@ -6,7 +8,6 @@
         public DateTime HealthRecordDate { get; set; }
         public decimal HealthRecordWeigtKg { get; set; }
         public decimal HealthRecordHeightCm { get; set; }
-        public bool HealthRecordIsPresent { get; set; }
         public string? HealthRecordNotes { get; set; }
     }
 }

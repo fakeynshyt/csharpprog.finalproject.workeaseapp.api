@@ -19,7 +19,7 @@ namespace WorkeaseAPI.Controllers
 
         // Step 3 — use it in endpoints
         [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginRequestDto request)
+        public async Task<IActionResult> Login(DTOs.LoginRequest request)
         {
             try
             {

@@ -6,5 +6,6 @@ namespace WorkeaseAPI.Interfaces
     {
         Task<InitialPackageDto> GetInitialPackageAsync(int userId, string role);
         Task<SyncResultDto> ProcessSyncAsync(SyncPayloadDto payload);
+        Task<FeeDownloadResultDto> DownloadNewFeesAsync(int cdwUserId);
     }
 }

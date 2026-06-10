@@ -1,15 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using WorkeaseAPI.Data;
 using WorkeaseAPI.DTOs;
 using WorkeaseAPI.Interfaces;
-using WorkeaseAPI.Models;
-using WorkeaseAPI.Services;
 
 namespace WorkeaseAPI.Controllers
 {
+    // Controllers/FeesController.cs
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
@@ -17,35 +14,35 @@ namespace WorkeaseAPI.Controllers
     {
         private readonly IFeeService _feeService;
         private readonly IAutoFeeService _autoFeeService;
-        private readonly AppDbContext _db;
+        private readonly IUserService _userService;
 
         public FeesController(IFeeService feeService,
                               IAutoFeeService autoFeeService,
-                              AppDbContext db)
+                              IUserService userService)
         {
             _feeService = feeService;
             _autoFeeService = autoFeeService;
-            _db = db;
+            _userService = userService;
         }
 
         [HttpGet]
         [Authorize(Policy = "AdminAndCDW")]
-        public async Task<IActionResult> GetAll([FromQuery] int? centerId,
-                                                [FromQuery] int? month,
-                                                [FromQuery] int? year)
+        public async Task<IActionResult> GetAll([FromQuery] int? childId,
+                                                [FromQuery] int? centerId,
+                                                [FromQuery] string? receiptNo)
         {
             try
             {
                 var role = GetUserType();
                 var userId = GetUserId();
 
-                if (role == "CDW" && !centerId.HasValue)
+                if (role == "CDW" && !centerId.HasValue && !childId.HasValue)
                 {
-                    var cdwUser = await _db.Users.FindAsync(userId);
-                    centerId = cdwUser?.CenterId;
+                    var user = await _userService.GetUserByIdAsync(userId);
+                    centerId = user?.CenterId;
                 }
 
-                var fees = await _feeService.GetFilteredFeeRecordAsync(centerId, month, year);
+                var fees = await _feeService.GetFilteredFeeRecordAsync(childId, centerId, receiptNo);
                 return Ok(fees);
             }
             catch (Exception ex)
@@ -55,30 +52,14 @@ namespace WorkeaseAPI.Controllers
             }
         }
 
-        [HttpGet("myChild")]
-        [Authorize(Policy = "ParentOnly")]
-        public async Task<IActionResult> GetMyChildFees()
-        {
-            try
-            {
-                var fees = await _feeService.GetFeeRecordByGuardianUserIdAsync(GetUserId());
-                return Ok(fees);
-            }
-            catch (Exception ex)
-            {
-                var inner = ex.InnerException?.Message ?? ex.Message;
-                return BadRequest(new { message = inner });
-            }
-        }
-
-        [HttpGet("{id}")]
+        [HttpGet("calculated/{childId}")]
         [Authorize(Policy = "AdminAndCDW")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetCalculated(int childId)
         {
             try
             {
-                var fee = await _feeService.GetFeeRecordByIdAsync(id);
-                return fee is null ? NotFound() : Ok(fee);
+                var result = await _feeService.GetCalculatedFeeByChildAsync(childId);
+                return Ok(result);
             }
             catch (Exception ex)
             {
@@ -87,14 +68,21 @@ namespace WorkeaseAPI.Controllers
             }
         }
 
-        [HttpPost]
-        [Authorize(Policy = "AdminOnly")]
-        public async Task<IActionResult> Create(CreateFeeDto dto)  // ✅ DTO
+        // GET api/fees/myChildren
+        // GET api/fees/myChildren?childId=2&month=4&year=2026
+        [HttpGet("myChildren")]
+        [Authorize(Policy = "ParentOnly")]
+        public async Task<IActionResult> GetMyChildrenFees(
+            [FromQuery] int? childId,
+            [FromQuery] int? month,
+            [FromQuery] int? year)
         {
             try
             {
-                var created = await _feeService.CreateFeeRecordAsync(dto, GetUserId());
-                return Ok(created);
+                var parentUserId = GetUserId();
+                var fees = await _feeService
+                                         .GetFeeRecordByGuardianUserIdAsync(parentUserId, childId, month, year);
+                return Ok(fees);
             }
             catch (Exception ex)
             {
@@ -110,7 +98,11 @@ namespace WorkeaseAPI.Controllers
             try
             {
                 var result = await _feeService.MarkFeeRecordAsPaidAsync(id);
-                return result ? NoContent() : NotFound();
+                if (!result) return NotFound();
+
+                // ✅ Return the updated fee so client sees the change
+                var updated = await _feeService.GetFeeRecordByIdAsync(id);
+                return Ok(updated);
             }
             catch (Exception ex)
             {
@@ -119,9 +111,29 @@ namespace WorkeaseAPI.Controllers
             }
         }
 
+        // POST api/fees
+        // POST api/fees
+        [HttpPost]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> Create(CreateFeeDto dto)
+        {
+            try
+            {
+                // ✅ Returns FeeSummaryDto directly
+                var created = await _feeService.CreateFeeRecordAsync(dto, GetUserId());
+                return Ok(created);
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
+        }
+
+        // PUT api/fees/{id}
         [HttpPut("{id}")]
         [Authorize(Policy = "AdminOnly")]
-        public async Task<IActionResult> Update(int id, UpdateFeeDto dto)  // ✅ DTO
+        public async Task<IActionResult> Update(int id, UpdateFeeDto dto)
         {
             try
             {
@@ -135,6 +147,7 @@ namespace WorkeaseAPI.Controllers
             }
         }
 
+        // DELETE api/fees/{id}
         [HttpDelete("{id}")]
         [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> Delete(int id)
@@ -163,10 +176,12 @@ namespace WorkeaseAPI.Controllers
             catch (Exception ex)
             {
                 var inner = ex.InnerException?.Message ?? ex.Message;
+
                 return BadRequest(new { message = inner });
             }
         }
 
+        // POST api/fees/process-overdue
         [HttpPost("process-overdue")]
         [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> ProcessOverdue()
@@ -174,7 +189,41 @@ namespace WorkeaseAPI.Controllers
             try
             {
                 await _autoFeeService.ProcessOverdueFeesAsync();
-                return Ok(new { message = "Overdue fees processed successfully." });
+                return Ok(new { message = "Overdue fees processed." });
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
+        }
+
+        // Controllers/FeesController.cs
+
+        // GET api/fees/summary
+        // GET api/fees/summary?centerId=1&month=4&year=2026
+        [HttpGet("summary")]
+        [Authorize(Policy = "AdminAndCDW")]
+        public async Task<IActionResult> GetOverallSummary([FromQuery] int? centerId,
+                                                            [FromQuery] int? month,
+                                                            [FromQuery] int? year)
+        {
+            try
+            {
+                var role = GetUserType();
+                var userId = GetUserId();
+
+                // CDW auto-filter by their center
+                if (role == "CDW" && !centerId.HasValue)
+                {
+                    var user = await _userService.GetUserByIdAsync(userId);
+                    centerId = user?.CenterId;
+                }
+
+                var summary = await _feeService.GetOverallFeesSummaryAsync(
+                    centerId, month, year);
+
+                return Ok(summary);
             }
             catch (Exception ex)
             {

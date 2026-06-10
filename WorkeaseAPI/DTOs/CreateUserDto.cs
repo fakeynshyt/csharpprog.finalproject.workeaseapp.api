@@ -12,6 +12,6 @@
         public int? CenterId { get; set; } = null;
 
         // Password goes here — validated before hashing
-        public string Password { get; set; } = string.Empty;
+        public string UserHashPassword { get; set; } = string.Empty;
     }
 }

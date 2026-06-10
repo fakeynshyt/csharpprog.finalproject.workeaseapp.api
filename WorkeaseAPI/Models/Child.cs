@@ -7,6 +7,7 @@
         public string ChildLastName { get; set; } = string.Empty;
         public DateTime ChildBirthDate {  get; set; }
         public string ChildGender { get; set; } = string.Empty;
+        public string ChildAddress { get; set; } = string.Empty;
         public int? GuardianId { get; set; }
         public User? Guardian { get; set; }
         public int CenterId { get; set; }

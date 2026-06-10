@@ -22,6 +22,44 @@ namespace WorkeaseAPI.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("WorkeaseAPI.Models.AttendanceRecord", b =>
+                {
+                    b.Property<int>("AttendanceRecordId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AttendanceRecordId"));
+
+                    b.Property<DateTime>("AttendanceRecordCreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("AttendanceRecordDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("AttendanceRecordIsPresent")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AttendanceRecordIsSync")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("AttendanceRecordUpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("AttendanceRecordedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ChildId")
+                        .HasColumnType("int");
+
+                    b.HasKey("AttendanceRecordId");
+
+                    b.HasIndex("AttendanceRecordedByUserId");
+
+                    b.HasIndex("ChildId", "AttendanceRecordDate");
+
+                    b.ToTable("AttendanceRecords");
+                });
+
             modelBuilder.Entity("WorkeaseAPI.Models.Center", b =>
                 {
                     b.Property<int>("CenterId")
@@ -54,6 +92,10 @@ namespace WorkeaseAPI.Migrations
                     b.Property<int>("CenterId")
                         .HasColumnType("int");
 
+                    b.Property<string>("ChildAddress")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("ChildBirthDate")
                         .HasColumnType("datetime2");
 
@@ -85,9 +127,7 @@ namespace WorkeaseAPI.Migrations
 
                     b.HasIndex("CenterId");
 
-                    b.HasIndex("GuardianId")
-                        .IsUnique()
-                        .HasFilter("[GuardianId] IS NOT NULL");
+                    b.HasIndex("GuardianId");
 
                     b.ToTable("Children");
                 });
@@ -106,6 +146,9 @@ namespace WorkeaseAPI.Migrations
                     b.Property<decimal>("FeeRecordCarryOver")
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
+
+                    b.Property<DateTime>("FeeRecordCreatedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("FeeRecordDueDate")
                         .HasColumnType("datetime2");
@@ -126,9 +169,16 @@ namespace WorkeaseAPI.Migrations
                     b.Property<DateTime?>("FeeRecordPaidDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("FeeRecordReceiptNo")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal>("FeeRecordTotalAmount")
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
+
+                    b.Property<DateTime>("FeeRecordUpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("FeeRecordYear")
                         .HasColumnType("int");
@@ -140,7 +190,65 @@ namespace WorkeaseAPI.Migrations
 
                     b.HasIndex("ChildId");
 
+                    b.HasIndex("FeeRecordedByUserId");
+
                     b.ToTable("FeeRecords");
+                });
+
+            modelBuilder.Entity("WorkeaseAPI.Models.Growth", b =>
+                {
+                    b.Property<int>("ChildId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Cognitive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Creative")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("LifeSkills")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("Motor")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("Reading")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("Social")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("SpentPoints")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("TotalPoints")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("ChildId");
+
+                    b.ToTable("Growths");
                 });
 
             modelBuilder.Entity("WorkeaseAPI.Models.HealthRecord", b =>
@@ -163,9 +271,6 @@ namespace WorkeaseAPI.Migrations
                     b.Property<decimal>("HealthRecordHeightCm")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<bool>("HealthRecordIsPresent")
-                        .HasColumnType("bit");
-
                     b.Property<bool>("HealthRecordIsSync")
                         .HasColumnType("bit");
 
@@ -173,7 +278,10 @@ namespace WorkeaseAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal>("HealthRecordWeigtKg")
+                    b.Property<DateTime>("HealthRecordUpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("HealthRecordWeightKg")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("HealthRecordedByUserId")
@@ -182,6 +290,8 @@ namespace WorkeaseAPI.Migrations
                     b.HasKey("HealthRecordId");
 
                     b.HasIndex("ChildId");
+
+                    b.HasIndex("HealthRecordedByUserId");
 
                     b.ToTable("HealthRecords");
                 });
@@ -194,12 +304,14 @@ namespace WorkeaseAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReportId"));
 
-                    b.Property<int>("CenterId")
+                    b.Property<int?>("CdwCenterId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Observations")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<DateTime>("GeneratedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("GeneratedByUserId")
+                        .HasColumnType("int");
 
                     b.Property<byte[]>("ReportFileData")
                         .HasColumnType("varbinary(max)");
@@ -208,23 +320,25 @@ namespace WorkeaseAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("ReportGeneratedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("ReportMonth")
+                    b.Property<int?>("ReportMonth")
                         .HasColumnType("int");
 
-                    b.Property<int>("ReportYear")
-                        .HasColumnType("int");
+                    b.Property<string>("ReportTitle")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("UserId")
+                    b.Property<string>("ReportType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ReportYear")
                         .HasColumnType("int");
 
                     b.HasKey("ReportId");
 
-                    b.HasIndex("CenterId");
+                    b.HasIndex("CdwCenterId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("GeneratedByUserId");
 
                     b.ToTable("Reports");
                 });
@@ -268,12 +382,12 @@ namespace WorkeaseAPI.Migrations
                     b.Property<int?>("CenterId")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("UserCreatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("UserEmail")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("UserEnrolledAt")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("UserHashPassword")
                         .IsRequired()
@@ -290,11 +404,33 @@ namespace WorkeaseAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime>("UserUpdatedAt")
+                        .HasColumnType("datetime2");
+
                     b.HasKey("UserId");
 
                     b.HasIndex("CenterId");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("WorkeaseAPI.Models.AttendanceRecord", b =>
+                {
+                    b.HasOne("WorkeaseAPI.Models.User", "AttendanceRecordedByUser")
+                        .WithMany()
+                        .HasForeignKey("AttendanceRecordedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("WorkeaseAPI.Models.Child", "Child")
+                        .WithMany()
+                        .HasForeignKey("ChildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AttendanceRecordedByUser");
+
+                    b.Navigation("Child");
                 });
 
             modelBuilder.Entity("WorkeaseAPI.Models.Child", b =>
@@ -306,8 +442,8 @@ namespace WorkeaseAPI.Migrations
                         .IsRequired();
 
                     b.HasOne("WorkeaseAPI.Models.User", "Guardian")
-                        .WithOne()
-                        .HasForeignKey("WorkeaseAPI.Models.Child", "GuardianId")
+                        .WithMany()
+                        .HasForeignKey("GuardianId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Center");
@@ -323,6 +459,25 @@ namespace WorkeaseAPI.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("WorkeaseAPI.Models.User", "RecordedByUser")
+                        .WithMany()
+                        .HasForeignKey("FeeRecordedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Child");
+
+                    b.Navigation("RecordedByUser");
+                });
+
+            modelBuilder.Entity("WorkeaseAPI.Models.Growth", b =>
+                {
+                    b.HasOne("WorkeaseAPI.Models.Child", "Child")
+                        .WithOne()
+                        .HasForeignKey("WorkeaseAPI.Models.Growth", "ChildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Child");
                 });
 
@@ -334,26 +489,33 @@ namespace WorkeaseAPI.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("WorkeaseAPI.Models.User", "RecordedByUser")
+                        .WithMany()
+                        .HasForeignKey("HealthRecordedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Child");
+
+                    b.Navigation("RecordedByUser");
                 });
 
             modelBuilder.Entity("WorkeaseAPI.Models.Report", b =>
                 {
                     b.HasOne("WorkeaseAPI.Models.Center", "Center")
                         .WithMany()
-                        .HasForeignKey("CenterId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("CdwCenterId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("WorkeaseAPI.Models.User", "User")
+                    b.HasOne("WorkeaseAPI.Models.User", "GeneratedByUser")
                         .WithMany()
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("GeneratedByUserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Center");
 
-                    b.Navigation("User");
+                    b.Navigation("GeneratedByUser");
                 });
 
             modelBuilder.Entity("WorkeaseAPI.Models.User", b =>

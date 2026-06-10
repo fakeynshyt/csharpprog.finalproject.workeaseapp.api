@@ -17,6 +17,7 @@ namespace WorkeaseAPI.Controllers
         public SyncController(ISyncService syncService)
             => _syncService = syncService;
 
+        // GET api/sync/initial-download
         [HttpGet("initial-download")]
         [Authorize(Policy = "AllRoles")]
         public async Task<IActionResult> InitialDownload()
@@ -35,14 +36,37 @@ namespace WorkeaseAPI.Controllers
             }
         }
 
+        // POST api/sync/upload
+        // CDW uploads all offline created/updated/deleted records
         [HttpPost("upload")]
         [Authorize(Policy = "AdminAndCDW")]
         public async Task<IActionResult> Upload(SyncPayloadDto payload)
         {
             try
             {
+                // Override from JWT — client cannot fake this
                 payload.CdwUserId = GetUserId();
                 var result = await _syncService.ProcessSyncAsync(payload);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
+        }
+
+        // GET api/sync/download-fees
+        // CDW pulls latest fees from server
+        // Checks for new generated fees or updates
+        [HttpGet("download-fees")]
+        [Authorize(Policy = "AdminAndCDW")]
+        public async Task<IActionResult> DownloadFees()
+        {
+            try
+            {
+                var userId = GetUserId();
+                var result = await _syncService.DownloadNewFeesAsync(userId);
                 return Ok(result);
             }
             catch (Exception ex)

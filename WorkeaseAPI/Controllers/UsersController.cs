@@ -34,6 +34,24 @@ namespace WorkeaseAPI.Controllers
             }
         }
 
+        // GET api/users/{id}
+        [HttpGet("{id}")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            try
+            {
+                var user = await _userService.GetUserByIdAsync(id);
+                return user is null ? NotFound() : Ok(user);
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
+        }
+
+        // GET api/users/me
         [HttpGet("me")]
         [Authorize(Policy = "AllRoles")]
         public async Task<IActionResult> GetMe()
@@ -50,15 +68,24 @@ namespace WorkeaseAPI.Controllers
             }
         }
 
+
+
         [HttpPost]
         [Authorize(Policy = "AdminOnly")]
-        public async Task<IActionResult> Create(CreateUserDto dto) 
+        public async Task<IActionResult> Create(CreateUserDto dto)
         {
             try
             {
                 var created = await _userService.CreateUserAsync(dto);
-                return CreatedAtAction(nameof(GetUserId),
-                    new { id = created.UserId }, created);
+
+                return Ok(new
+                {
+                    message = "User created successfully.",
+                    userId = created.UserId,
+                    name = created.UserName,
+                    email = created.UserEmail,
+                    type = created.UserType
+                });
             }
             catch (Exception ex)
             {

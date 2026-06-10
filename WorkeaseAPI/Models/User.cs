@@ -10,6 +10,7 @@
         public int? CenterId { get; set; }
         public Center? Center { get; set; }
         public bool UserIsActive { get; set; } = true;
-        public DateTime UserEnrolledAt { get; set; } = DateTime.UtcNow;
+        public DateTime UserCreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UserUpdatedAt { get; set; } = DateTime.UtcNow;
     }
 }

@@ -9,18 +9,19 @@ using WorkeaseAPI.Models;
 
 namespace WorkeaseAPI.Controllers
 {
+    // Controllers/HealthController.cs
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
     public class HealthController : ControllerBase
     {
         private readonly IHealthService _healthService;
-        private readonly AppDbContext _db;
+        private readonly IUserService _userService;
 
-        public HealthController(IHealthService healthService, AppDbContext db)
+        public HealthController(IHealthService healthService, IUserService userService)
         {
             _healthService = healthService;
-            _db = db;
+            _userService = userService;
         }
 
         [HttpGet]
@@ -33,13 +34,15 @@ namespace WorkeaseAPI.Controllers
                 var role = GetUserType();
                 var userId = GetUserId();
 
+                // CDW auto-filter by their center
                 if (role == "CDW" && !centerId.HasValue)
                 {
-                    var cdwUser = await _db.Users.FindAsync(userId);
-                    centerId = cdwUser?.CenterId;
+                    var user = await _userService.GetUserByIdAsync(userId);
+                    centerId = user?.CenterId;
                 }
 
-                var records = await _healthService.GetFilteredHealthRecordsAsync(childId, centerId);
+                var records = await _healthService
+                                    .GetFilteredHealthRecordsAsync(childId, centerId);
                 return Ok(records);
             }
             catch (Exception ex)
@@ -49,13 +52,20 @@ namespace WorkeaseAPI.Controllers
             }
         }
 
-        [HttpGet("myChild")]
+        // GET api/health/myChildren
+        // GET api/health/myChildren?childId=2&month=4&year=2026
+        [HttpGet("myChildren")]
         [Authorize(Policy = "ParentOnly")]
-        public async Task<IActionResult> GetMyChildHealth()
+        public async Task<IActionResult> GetMyChildrenHealth(
+            [FromQuery] int? childId,
+            [FromQuery] int? month,
+            [FromQuery] int? year)
         {
             try
             {
-                var records = await _healthService.GetHealthRecordByParentUserIdAsync(GetUserId());
+                var parentUserId = GetUserId();
+                var records = await _healthService
+                                         .GetHealthRecordByGuardianIdAsync(parentUserId, childId, month, year);
                 return Ok(records);
             }
             catch (Exception ex)
@@ -64,6 +74,7 @@ namespace WorkeaseAPI.Controllers
                 return BadRequest(new { message = inner });
             }
         }
+
 
         [HttpGet("{id}")]
         [Authorize(Policy = "AdminAndCDW")]
@@ -83,13 +94,18 @@ namespace WorkeaseAPI.Controllers
 
         [HttpPost]
         [Authorize(Policy = "AdminAndCDW")]
-        public async Task<IActionResult> Create(CreateHealthDto dto)  // ✅ DTO
+        public async Task<IActionResult> Create(CreateHealthDto dto)
         {
             try
             {
                 var created = await _healthService.CreateHealthRecordAsync(dto, GetUserId());
-                return CreatedAtAction(nameof(GetById),
-                    new { id = created.HealthRecordId }, created);
+                return Ok(new
+                {
+                    message = "Health record created successfully.",
+                    healthRecordId = created.HealthRecordId,
+                    childId = created.ChildId,
+                    bmi = created.HealthBmi
+                });
             }
             catch (Exception ex)
             {
@@ -100,7 +116,7 @@ namespace WorkeaseAPI.Controllers
 
         [HttpPut("{id}")]
         [Authorize(Policy = "AdminOnly")]
-        public async Task<IActionResult> Update(int id, UpdateHealthDto dto)  // ✅ DTO
+        public async Task<IActionResult> Update(int id, UpdateHealthDto dto)
         {
             try
             {
@@ -122,6 +138,22 @@ namespace WorkeaseAPI.Controllers
             {
                 var result = await _healthService.DeleteHealthRecordAsync(id);
                 return result ? NoContent() : NotFound();
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = inner });
+            }
+        }
+
+        [HttpGet("abnormal-bmi")]
+        [Authorize(Policy = "AdminAndCDW")]
+        public async Task<IActionResult> GetAbnormalBmi()
+        {
+            try
+            {
+                var result = await _healthService.GetAbnormalChildrenBmiAsync();
+                return Ok(result);
             }
             catch (Exception ex)
             {
